@@ -1,16 +1,15 @@
 # ============================================================
 # config.py — Configuración centralizada de la aplicación
 # ============================================================
-# Pydantic lee automáticamente las variables del archivo .env
-# y las valida. Si falta una variable obligatoria, el servidor
-# no arranca y te avisa exactamente qué falta.
 
-from pydantic_settings import BaseSettings
+import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     # --- Base de datos ---
-    DATABASE_URL: str  # Required — must be set via environment variable (no default)
+    # Valor por defecto para desarrollo local con Docker Compose
+    DATABASE_URL: str = "postgresql://user:password@localhost:5432/socialapp_db"
 
     # --- Seguridad / JWT ---
     SECRET_KEY: str = "cambia-esto-por-una-clave-secreta-muy-larga"
@@ -24,17 +23,19 @@ class Settings(BaseSettings):
     # --- Nombre de la app ---
     APP_NAME: str = "SocialApp"
 
-    # --- Credenciales de departamentos (cámbialo en producción con variable de entorno) ---
-    # En Railway: añade DEPT_PROMOCION_PASSWORD en el panel de variables
+    # --- Credenciales de departamentos ---
     DEPT_PROMOCION_PASSWORD: str = "Promocion2026"
 
-    class Config:
-        # Le dice a pydantic que lea las variables desde el archivo .env
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # Usa model_config (la forma moderna de pydantic-settings v2)
+    # env_file_sentinel='missing' evita errores si .env no existe
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",          # Ignora variables de Railway que no necesitamos
+    )
 
 
-# Instancia única que importarás en cualquier archivo:
-#   from app.config import settings
-#   print(settings.DATABASE_URL)
+# Diagnóstico de arranque
 settings = Settings()
+print(f"[CONFIG] DATABASE_URL = {settings.DATABASE_URL[:30]}...")
+print(f"[CONFIG] ENVIRONMENT = {settings.ENVIRONMENT}")
