@@ -40,6 +40,8 @@ COPY --from=builder /install /usr/local
 
 # Copia el código de la app desde backend/app/
 COPY backend/app ./app
+# Ensure static files (HTML, CSS, JS) are explicitly included
+COPY backend/app/static ./app/static
 
 USER appuser
 
