@@ -47,4 +47,4 @@ USER appuser
 
 # Railway asigna el puerto dinámicamente en la variable de entorno $PORT
 # ${PORT:-8000} significa: usa $PORT si existe, si no usa 8000 (desarrollo)
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
