@@ -3,6 +3,7 @@
 # ============================================================
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -187,7 +188,7 @@ app.include_router(mayor_a_casa.router, prefix="/mayor-a-casa", tags=["Mayor a C
 # ============================================================
 # Monta la carpeta app/static/ en la URL /static
 # El navegador pedirá /static/css/app.css → FastAPI devuelve el archivo real
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
 # ============================================================
 # ENDPOINTS BASE
@@ -201,4 +202,4 @@ async def health_check():
 @app.get("/", include_in_schema=False)
 async def serve_frontend():
     """Sirve la interfaz gráfica."""
-    return FileResponse("app/static/index.html")
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
