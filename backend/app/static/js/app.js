@@ -1,6 +1,5 @@
 /* ============================================================
    app.js — Lógica del frontend de SocialApp
-   Habla con el backend FastAPI a través de fetch (HTTP)
    ============================================================ */
 
 'use strict';
@@ -9,22 +8,41 @@
 const state = {
   casos: [],       // Lista de casos cargados desde la API
   editingId: null, // null = crear nuevo, número = editar ese ID
+  token: localStorage.getItem('socialapp_token'),
+  deptName: localStorage.getItem('socialapp_dept'),
+  sortBy:  'nombre',   // 'nombre' | 'renovacion' | 'activo'
+  sortDir: 'asc',      // 'asc' | 'desc'
+  filterZona: null,    // null = todas, o 1/2/3/4
 };
 
 // ── Utilidades ────────────────────────────────────────────────
 
-/** Llama a la API del backend. Devuelve el JSON o lanza un error legible. */
+function g(id) { return document.getElementById(id); }
+
+/** Llama a la API del backend. Incluye el token si existe. */
 async function api(method, path, body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const headers = { 'Content-Type': 'application/json' };
+  if (state.token) {
+    headers['Authorization'] = `Bearer ${state.token}`;
+  }
+
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
+
   const res = await fetch(path, opts);
-  if (res.status === 204) return null; // 204 = borrado OK, sin cuerpo
+
+  // Si el servidor dice 401 (No autorizado), cerramos sesión automáticamente
+  if (res.status === 401) {
+    logout();
+    throw new Error('Sesión expirada o no autorizada');
+  }
+
+  if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
   return data;
 }
 
-/** Convierte "2025-04" → "Abr 2025", o "—" si no hay valor */
 function formatMes(val) {
   if (!val) return '—';
   const [year, month] = val.split('-').map(Number);
@@ -32,17 +50,84 @@ function formatMes(val) {
   return `${meses[month - 1]} ${year}`;
 }
 
-/** Convierte "2025-04-01" → "01/04/2025", o "—" si no hay valor */
 function formatFecha(val) {
   if (!val) return '—';
   const [y, m, d] = val.split('-');
   return `${d}/${m}/${y}`;
 }
 
-/** Escapa caracteres peligrosos en HTML (para evitar inyección) */
 function esc(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Autenticación ─────────────────────────────────────────────
+
+async function onLoginSubmit(e) {
+  e.preventDefault();
+  const user = g('login-user').value.trim();
+  const pass = g('login-pass').value.trim();
+  const errEl = g('login-error');
+  const btn = g('login-btn');
+
+  if (!user || !pass) {
+    errEl.classList.remove('hidden');
+    g('login-error-msg').textContent = 'Introduce usuario y contraseña';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  errEl.classList.add('hidden');
+
+  try {
+    const data = await api('POST', '/auth/login', { username: user, password: pass });
+    
+    // Guardar sesión
+    state.token = data.access_token;
+    state.deptName = data.dept_name;
+    localStorage.setItem('socialapp_token', data.access_token);
+    localStorage.setItem('socialapp_dept', data.dept_name);
+
+    // Mostrar app
+    initApp();
+    toast(`Bienvenido, ${state.deptName}`, 'success');
+  } catch (err) {
+    errEl.classList.remove('hidden');
+    g('login-error-msg').textContent = err.message;
+    btn.disabled = false;
+    btn.textContent = 'Iniciar sesión';
+  }
+}
+
+function logout() {
+  state.token = null;
+  state.deptName = null;
+  localStorage.removeItem('socialapp_token');
+  localStorage.removeItem('socialapp_dept');
+  
+  g('main-app').classList.add('hidden');
+  g('login-screen').classList.remove('hidden');
+  g('login-form').reset();
+  g('login-btn').disabled = false;
+  g('login-btn').textContent = 'Iniciar sesión';
+}
+
+function initApp() {
+  if (!state.token) {
+    g('login-screen').classList.remove('hidden');
+    g('main-app').classList.add('hidden');
+    return;
+  }
+
+  g('login-screen').classList.add('hidden');
+  g('main-app').classList.remove('hidden');
+  g('dept-name-display').textContent = state.deptName;
+
+  cargarCasos().catch(err => {
+    if (err.message.includes('Sesión')) return; // logout() ya se encargó
+    toast('Error al cargar datos', 'error');
+  });
 }
 
 // ── API: operaciones CRUD ─────────────────────────────────────
@@ -75,255 +160,329 @@ function renderStats() {
   const activos = state.casos.filter(c => c.activo).length;
   const bajas   = total - activos;
   const zonas   = new Set(state.casos.map(c => c.zona).filter(Boolean)).size;
+  const hombres = state.casos.filter(c => c.sexo === 'hombre').length;
+  const mujeres = state.casos.filter(c => c.sexo === 'mujer').length;
 
-  document.getElementById('stat-total').textContent   = total;
-  document.getElementById('stat-activos').textContent = activos;
-  document.getElementById('stat-bajas').textContent   = bajas;
-  document.getElementById('stat-zonas').textContent   = zonas;
+  g('stat-total').textContent   = total;
+  g('stat-activos').textContent = activos;
+  g('stat-bajas').textContent   = bajas;
+  g('stat-zonas').textContent   = zonas;
+  g('stat-hombres').textContent = hombres;
+  g('stat-mujeres').textContent = mujeres;
+}
+
+// ── Filtrado y ordenación ─────────────────────────────────────
+
+function getFilteredSorted() {
+  let list = [...state.casos];
+
+  if (state.filterZona !== null) {
+    list = list.filter(c => c.zona === state.filterZona);
+  }
+
+  list.sort((a, b) => {
+    if (state.sortBy === 'nombre') {
+      const sa = `${a.apellidos || ''} ${a.nombre || ''}`;
+      const sb = `${b.apellidos || ''} ${b.nombre || ''}`;
+      const cmp = sa.localeCompare(sb, 'es', { sensitivity: 'base' });
+      return state.sortDir === 'asc' ? cmp : -cmp;
+    }
+    let va, vb;
+    if (state.sortBy === 'renovacion') {
+      // Nulos al final siempre
+      if (!a.mes_renovacion && !b.mes_renovacion) return 0;
+      if (!a.mes_renovacion) return 1;
+      if (!b.mes_renovacion) return -1;
+      va = a.mes_renovacion; vb = b.mes_renovacion;
+    } else if (state.sortBy === 'activo') {
+      va = a.activo ? 0 : 1;
+      vb = b.activo ? 0 : 1;
+    }
+    if (va < vb) return state.sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return state.sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return list;
+}
+
+function updateSortUI() {
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    const key = btn.dataset.sort;
+    const dirEl = btn.querySelector('.sort-dir');
+    const isActive = key === state.sortBy;
+    btn.classList.toggle('active', isActive);
+    if (dirEl) {
+      if (!isActive) { dirEl.textContent = '↕'; }
+      else { dirEl.textContent = state.sortDir === 'asc' ? '↑' : '↓'; }
+    }
+  });
 }
 
 // ── Tabla ─────────────────────────────────────────────────────
 
 function renderTabla() {
-  const tbody = document.getElementById('tbody-casos');
+  const tbody = g('tbody-casos');
+  const list  = getFilteredSorted();
+
+  const countEl = g('results-count');
+  if (countEl) {
+    const total = state.casos.length;
+    countEl.textContent = list.length === total
+      ? `${total} caso${total !== 1 ? 's' : ''}`
+      : `${list.length} de ${total}`;
+  }
 
   if (!state.casos.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" class="empty-cell">
-          No hay casos registrados. Haz clic en <strong>+ Nuevo caso</strong> para añadir el primero.
-        </td>
-      </tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">No hay casos registrados.</td></tr>`;
+    return;
+  }
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">Sin resultados para el filtro aplicado.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = state.casos.map(c => `
+  tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
       <td>${esc(c.dni_sip)}</td>
-      <td>${c.zona ? `<span class="zona-badge">Zona ${c.zona}</span>` : '<span style="color:var(--text-3)">—</span>'}</td>
+      <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
+      <td>${({hombre:'Hombre',mujer:'Mujer',no_define:'No define'})[c.sexo] || '—'}</td>
       <td>${esc(c.telefono) || '—'}</td>
       <td>${formatMes(c.mes_renovacion)}</td>
       <td>${formatFecha(c.fecha_alta)}</td>
-      <td>
-        <span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">
-          ${c.activo ? '● Activo' : '○ Baja'}
-        </span>
-      </td>
+      <td><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? '● Activo' : '○ Baja'}</span></td>
       <td class="td-actions">
-        <button class="btn-icon edit-btn"   data-id="${c.id}" title="Editar">✏️</button>
-        <button class="btn-icon delete-btn" data-id="${c.id}" title="Eliminar">🗑</button>
+        <button class="btn-icon edit-btn" data-id="${c.id}">✏️</button>
+        <button class="btn-icon delete-btn" data-id="${c.id}">🗑</button>
       </td>
     </tr>
   `).join('');
 
-  // Fila completa → abre el modal de edición
   tbody.querySelectorAll('tr[data-id]').forEach(row => {
-    row.addEventListener('click', () => {
-      const caso = state.casos.find(c => c.id === parseInt(row.dataset.id));
-      abrirModal(caso);
-    });
+    row.addEventListener('click', () => abrirModal(state.casos.find(c => c.id === parseInt(row.dataset.id))));
   });
 
-  // Botón editar (detiene propagación para no disparar doble)
   tbody.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      const caso = state.casos.find(c => c.id === parseInt(btn.dataset.id));
-      abrirModal(caso);
+      abrirModal(state.casos.find(c => c.id === parseInt(btn.dataset.id)));
     });
   });
 
-  // Botón eliminar
   tbody.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
+    btn.addEventListener('click', e => {
       e.stopPropagation();
-      const caso = state.casos.find(c => c.id === parseInt(btn.dataset.id));
-      pedirConfirmacionEliminar(caso);
+      pedirConfirmacionEliminar(state.casos.find(c => c.id === parseInt(btn.dataset.id)));
     });
   });
+}
+
+// ── Tema claro/oscuro ─────────────────────────────────────────
+
+function initTheme() {
+  const saved = localStorage.getItem('socialapp_theme') || 'dark';
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('socialapp_theme', theme);
+  const btn = g('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
 // ── Modal ─────────────────────────────────────────────────────
 
 function abrirModal(caso = null) {
   state.editingId = caso ? caso.id : null;
+  g('modal-title').textContent = caso ? 'Editar Caso' : 'Nuevo Caso';
+  g('modal-subtitle').textContent = caso ? `${caso.apellidos}, ${caso.nombre}` : 'Rellena los datos';
+  g('btn-eliminar').classList.toggle('hidden', !caso);
+  g('caso-form').reset();
 
-  // Título y subtítulo
-  document.getElementById('modal-title').textContent =
-    caso ? 'Editar Caso' : 'Nuevo Caso';
-  document.getElementById('modal-subtitle').textContent =
-    caso ? `${caso.apellidos}, ${caso.nombre} · ${caso.dni_sip}` : 'Rellena los datos del caso';
-
-  // Mostrar/ocultar botón eliminar
-  document.getElementById('btn-eliminar').classList.toggle('hidden', !caso);
-
-  // Resetear el formulario
-  document.getElementById('caso-form').reset();
-
-  // Si es edición, pre-rellenar todos los campos
   if (caso) {
-    g('f-apellidos').value = caso.apellidos     ?? '';
-    g('f-nombre').value    = caso.nombre        ?? '';
-    g('f-dni').value       = caso.dni_sip       ?? '';
-    g('f-zona').value      = caso.zona          ?? '';
-    g('f-tel').value       = caso.telefono      ?? '';
-    g('f-renov').value     = caso.mes_renovacion?? '';
-    g('f-alta').value      = caso.fecha_alta    ?? '';
-    g('f-baja').value      = caso.fecha_baja    ?? '';
-    g('f-dir').value       = caso.direccion     ?? '';
-    g('f-activo').checked  = caso.activo !== false;
-    g('f-obs').value       = caso.observaciones ?? '';
+    g('f-apellidos').value = caso.apellidos || '';
+    g('f-nombre').value = caso.nombre || '';
+    g('f-dni').value = caso.dni_sip || '';
+    g('f-zona').value = caso.zona || '';
+    g('f-sexo').value = caso.sexo || '';
+    g('f-tel').value = caso.telefono || '';
+    g('f-renov').value = caso.mes_renovacion || '';
+    g('f-alta').value = caso.fecha_alta || '';
+    g('f-baja').value = caso.fecha_baja || '';
+    g('f-dir').value = caso.direccion || '';
+    g('f-activo').checked = caso.activo !== false;
+    g('f-obs').value = caso.observaciones || '';
     updateToggleLabel();
+  } else {
+    g('f-renov').value = new Date().toISOString().slice(0, 7);
   }
 
-  document.getElementById('modal-backdrop').classList.remove('hidden');
-  document.getElementById('modal-submit').disabled = false;
-  document.getElementById('modal-submit').textContent = 'Guardar';
-  setTimeout(() => g('f-apellidos').focus(), 80);
+  g('modal-backdrop').classList.remove('hidden');
+  g('modal-submit').disabled = false;
+  g('modal-submit').textContent = 'Guardar';
 }
 
-function cerrarModal() {
-  document.getElementById('modal-backdrop').classList.add('hidden');
-  state.editingId = null;
-}
+function cerrarModal() { g('modal-backdrop').classList.add('hidden'); state.editingId = null; }
 
-/** Actualiza el texto "Activo / Baja" junto al toggle */
 function updateToggleLabel() {
   const checked = g('f-activo').checked;
-  document.getElementById('toggle-label-text').textContent = checked ? 'Activo' : 'Dado de baja';
-  document.getElementById('toggle-label-text').style.color = checked ? 'var(--success)' : 'var(--text-3)';
+  g('toggle-label-text').textContent = checked ? 'Activo' : 'Dado de baja';
+  g('toggle-label-text').style.color = checked ? 'var(--success)' : 'var(--text-3)';
 }
 
-/** Recoge los datos del formulario y los envía a la API */
 async function onFormSubmit(e) {
   e.preventDefault();
-
   const datos = {
-    apellidos:      g('f-apellidos').value.trim(),
-    nombre:         g('f-nombre').value.trim(),
-    dni_sip:        g('f-dni').value.trim(),
-    zona:           g('f-zona').value      ? parseInt(g('f-zona').value)   : null,
-    mes_renovacion: g('f-renov').value     || null,
-    telefono:       g('f-tel').value.trim()  || null,
-    fecha_alta:     g('f-alta').value      || null,
-    fecha_baja:     g('f-baja').value      || null,
-    direccion:      g('f-dir').value.trim()  || null,
-    activo:         g('f-activo').checked,
-    observaciones:  g('f-obs').value.trim()  || null,
+    apellidos: g('f-apellidos').value.trim(),
+    nombre: g('f-nombre').value.trim(),
+    dni_sip: g('f-dni').value.trim(),
+    zona: g('f-zona').value ? parseInt(g('f-zona').value) : null,
+    sexo: g('f-sexo').value || null,
+    mes_renovacion: g('f-renov').value || null,
+    telefono: g('f-tel').value.trim() || null,
+    fecha_alta: g('f-alta').value || null,
+    fecha_baja: g('f-baja').value || null,
+    direccion: g('f-dir').value.trim() || null,
+    activo: g('f-activo').checked,
+    observaciones: g('f-obs').value.trim() || null,
   };
 
-  // Validación mínima en el cliente
   if (!datos.apellidos || !datos.nombre || !datos.dni_sip) {
-    toast('Los campos Apellidos, Nombre y DNI/SIP son obligatorios', 'error');
+    toast('Campos obligatorios faltantes', 'error');
     return;
   }
 
-  const submitBtn = document.getElementById('modal-submit');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Guardando...';
-
   try {
-    if (state.editingId) {
-      await actualizarCaso(state.editingId, datos);
-      toast(`Caso de ${datos.apellidos} actualizado`, 'success');
-    } else {
-      await crearCaso(datos);
-      toast(`Caso de ${datos.apellidos} creado correctamente`, 'success');
-    }
+    if (state.editingId) await actualizarCaso(state.editingId, datos);
+    else await crearCaso(datos);
     cerrarModal();
-  } catch (err) {
-    toast(err.message, 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Guardar';
-  }
+    toast('Guardado correctamente', 'success');
+  } catch (err) { toast(err.message, 'error'); }
 }
 
 function pedirConfirmacionEliminar(caso) {
-  if (confirm(`¿Eliminar el caso de ${caso.apellidos}, ${caso.nombre}?\n\nEsta acción no se puede deshacer.`)) {
-    eliminarCaso(caso.id)
-      .then(() => { cerrarModal(); toast('Caso eliminado', 'info'); })
-      .catch(err => toast(err.message, 'error'));
+  if (confirm(`¿Eliminar caso de ${caso.apellidos}?`)) {
+    eliminarCaso(caso.id).then(() => toast('Eliminado', 'info')).catch(err => toast(err.message, 'error'));
   }
 }
 
-// ── Informe PDF ───────────────────────────────────────────────
-
-async function descargarPDF() {
-  const btn = document.getElementById('btn-pdf');
+async function descargarPDF(tipo = 'activos') {
+  const btn      = g('btn-pdf');
+  const btnArrow = g('btn-pdf-toggle');
   btn.disabled = true;
-  btn.textContent = '⏳ Generando...';
+  btnArrow.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Generando...';
+
+  const path = tipo === 'renovacion'
+    ? '/mayor-a-casa/casos/informe/pdf/renovacion'
+    : '/mayor-a-casa/casos/informe/pdf';
+
   try {
-    const res = await fetch('/mayor-a-casa/casos/informe/pdf');
-    if (!res.ok) throw new Error('Error al generar el informe');
+    const res = await fetch(path, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    if (!res.ok) throw new Error('Error al generar PDF');
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `informe_mayor_a_casa_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `informe_${new Date().toISOString().slice(0, 10)}.pdf`;
     a.click();
-    URL.revokeObjectURL(url);
-    toast('Informe PDF descargado', 'success');
-  } catch (err) {
-    toast(err.message, 'error');
-  } finally {
+    toast('PDF descargado', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+  finally {
     btn.disabled = false;
-    btn.innerHTML = '<span>📄</span> Generar Informe PDF';
+    btnArrow.disabled = false;
+    btn.innerHTML = '<span>📊</span> Generar Informe PDF';
   }
 }
-
-// ── Notificaciones toast ──────────────────────────────────────
 
 function toast(msg, type = 'info') {
   const icons = { success: '✓', error: '✕', info: 'ℹ' };
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
-  document.getElementById('toast-container').appendChild(el);
+  el.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  g('toast-container').appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => {
-    el.classList.remove('show');
-    setTimeout(() => el.remove(), 300);
-  }, 3500);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
 }
-
-// ── Helper: getElementById abreviado ─────────────────────────
-function g(id) { return document.getElementById(id); }
 
 // ── Inicialización ────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  initApp();
 
-  // Cargar datos iniciales
-  cargarCasos().catch(() =>
-    toast('No se pudo conectar con el servidor. Comprueba que Docker está activo.', 'error')
-  );
+  g('login-form').addEventListener('submit', onLoginSubmit);
+  g('btn-logout').addEventListener('click', logout);
+  g('btn-theme').addEventListener('click', toggleTheme);
 
-  // Botón "Nuevo caso"
+  g('toggle-pwd').addEventListener('click', () => {
+    const input = g('login-pass');
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    g('pwd-eye').textContent = isPass ? '🙈' : '👁';
+  });
+
   g('btn-nuevo').addEventListener('click', () => abrirModal());
-
-  // Botón "Generar PDF"
-  g('btn-pdf').addEventListener('click', descargarPDF);
-
-  // Enviar formulario
+  g('btn-pdf').addEventListener('click', () => descargarPDF('activos'));
+  g('btn-pdf-toggle').addEventListener('click', e => {
+    e.stopPropagation();
+    g('pdf-menu').classList.toggle('hidden');
+  });
+  g('pdf-menu').addEventListener('click', e => {
+    const item = e.target.closest('.split-menu-item');
+    if (!item) return;
+    g('pdf-menu').classList.add('hidden');
+    descargarPDF(item.dataset.tipo);
+  });
+  document.addEventListener('click', () => {
+    const menu = g('pdf-menu');
+    if (menu) menu.classList.add('hidden');
+  });
   g('caso-form').addEventListener('submit', onFormSubmit);
-
-  // Cerrar modal
   g('modal-close').addEventListener('click', cerrarModal);
   g('modal-cancel').addEventListener('click', cerrarModal);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+  g('f-activo').addEventListener('change', updateToggleLabel);
 
-  // Clic fuera del modal → cerrar
   g('modal-backdrop').addEventListener('click', e => {
     if (e.target === g('modal-backdrop')) cerrarModal();
   });
 
-  // Botón eliminar (dentro del modal)
   g('btn-eliminar').addEventListener('click', () => {
     const caso = state.casos.find(c => c.id === state.editingId);
     if (caso) pedirConfirmacionEliminar(caso);
   });
 
-  // Toggle Activo/Baja actualiza el texto en tiempo real
-  g('f-activo').addEventListener('change', updateToggleLabel);
+  // Filtros de zona
+  g('zona-filters').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#zona-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.filterZona = btn.dataset.zona === '' ? null : parseInt(btn.dataset.zona);
+    renderTabla();
+  });
+
+  // Botones de ordenación
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.sort;
+      if (state.sortBy === key) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortBy = key;
+        state.sortDir = 'asc';
+      }
+      updateSortUI();
+      renderTabla();
+    });
+  });
 });

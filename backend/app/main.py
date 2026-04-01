@@ -6,16 +6,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles   # Sirve archivos HTML/CSS/JS
-from fastapi.responses import FileResponse    # Devuelve el index.html al navegador
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-# Conexión a la BD y modelos (importamos el módulo completo para que SQLAlchemy conozca todas las tablas)
 from app.database import engine
 from app import models as _models  # noqa: F401
 
-# Routers
-from app.routers import users
-from app.routers import mayor_a_casa
+from app.routers import users, mayor_a_casa, auth
+from app.utils.auth import hash_password
+from app.config import settings
 
 # ============================================================
 # LIFESPAN — Código que se ejecuta al arrancar y al apagar
@@ -26,19 +25,125 @@ from app.routers import mayor_a_casa
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── AL ARRANCAR ──────────────────────────────────────────
-    # Crea TODAS las tablas en PostgreSQL si no existen todavía.
-    # Es seguro: si la tabla ya existe, no la toca ni borra datos.
-    print("🚀 Arrancando SocialApp API...")
-    # create_all crea todas las tablas registradas en models/__init__.py
-    # si ya existen, no las modifica (es seguro correrlo siempre)
+    print("\U0001f680 Arrancando SocialApp API...")
+
+    # 1. Crea todas las tablas si no existen
     _models.Base.metadata.create_all(bind=engine)
-    print("✅ Tablas verificadas/creadas en PostgreSQL")
+    print("\u2705 Tablas verificadas/creadas en PostgreSQL")
 
-    yield   # ← Aquí el servidor empieza a atender peticiones
+    # 2. Migraciones manuales: añade columnas nuevas si la tabla ya existía
+    from sqlalchemy import text
+    from app.database import SessionLocal as _SL
+    _db = _SL()
+    try:
+        _db.execute(text(
+            "ALTER TABLE casos_mayor_a_casa "
+            "ADD COLUMN IF NOT EXISTS sexo VARCHAR(10)"
+        ))
+        _db.commit()
+        print("\u2705 Columna 'sexo' verificada")
+    except Exception as e:
+        _db.rollback()
+        print(f"\u26a0\ufe0f  Migración 'sexo' omitida: {e}")
+    finally:
+        _db.close()
 
-    # ── AL APAGAR ────────────────────────────────────────────
-    print("🛑 Apagando SocialApp API...")
+    # 3. Crea o actualiza el departamento de Promo (sincroniza la contraseña)
+    from app.database import SessionLocal
+    from app.models.departamento import Departamento
+    db = SessionLocal()
+    try:
+        dept = db.query(Departamento).filter_by(username="promocion").first()
+        if not dept:
+            db.add(Departamento(
+                nombre="Servicio de Promoci\u00f3n",
+                username="promocion",
+                hashed_password=hash_password(settings.DEPT_PROMOCION_PASSWORD),
+            ))
+            db.commit()
+            print("\u2705 Departamento 'promocion' creado")
+        else:
+            dept.hashed_password = hash_password(settings.DEPT_PROMOCION_PASSWORD)
+            db.commit()
+            print("\u2705 Contrase\u00f1a 'promocion' sincronizada con settings")
+    finally:
+        db.close()
+
+    # 4. Seed de datos de ejemplo (sólo si no hay ningún caso con sexo asignado)
+    from app.models.caso_mayor_a_casa import CasoMayorACasa
+    from datetime import date as _date
+    db2 = SessionLocal()
+    try:
+        sin_sexo = db2.query(CasoMayorACasa).filter(CasoMayorACasa.sexo != None).count() == 0
+        if sin_sexo:
+            db2.query(CasoMayorACasa).delete()
+            _SEED = [
+                # ── Zona 1 ────────────────────────────────────────────────────────────────
+                dict(apellidos="Abad Molina",       nombre="Josefa",        dni_sip="47823641",  zona=1, sexo="mujer",    telefono="966 801 234", direccion="C/ Tom\u00e0s Ortu\u00f1o, 12, 2\u00baA",       mes_renovacion="2026-03", fecha_alta=_date(2024,1,10),  activo=True),
+                dict(apellidos="\u00c1lvarez Campos",nombre="Manuel",       dni_sip="12847365X", zona=1, sexo="hombre",   telefono="966 802 345", direccion="Avda. del Mediterr\u00e1neo, 34, 1\u00baB",    mes_renovacion="2026-05", fecha_alta=_date(2023,6,15),  activo=True),
+                dict(apellidos="Blanco Navarro",    nombre="Amparo",        dni_sip="93521847",  zona=1, sexo="mujer",    telefono="966 803 456", direccion="C/ Gambo, 8, bajo",                            mes_renovacion="2026-07", fecha_alta=_date(2024,3,20),  activo=True),
+                dict(apellidos="Cabrera Soler",     nombre="Francisco",     dni_sip="35621890M", zona=1, sexo="hombre",   telefono="966 804 567", direccion="C/ La Mar, 4, 3\u00baA",                       mes_renovacion="2026-04", fecha_alta=_date(2022,11,5),  activo=True),
+                dict(apellidos="Dom\u00e8nech Ramos",nombre="Pilar",        dni_sip="71934205",  zona=1, sexo="mujer",    telefono=None,          direccion="C/ Esperan\u00e7a, 7, 1\u00baC",               mes_renovacion="2026-06", fecha_alta=_date(2023,9,12),  activo=True),
+                dict(apellidos="Esteban Torres",    nombre="Enrique",       dni_sip="48203967Y", zona=1, sexo="hombre",   telefono="966 805 678", direccion="Avda. de l'Aig\u00fcera, 3, 2\u00baD",          mes_renovacion="2026-08", fecha_alta=_date(2024,2,28),  activo=True),
+                dict(apellidos="Ferrer Llopis",     nombre="Carmen",        dni_sip="62891034",  zona=1, sexo="mujer",    telefono="966 806 789", direccion="C/ Ausi\u00e0s March, 11, 4\u00baB",            mes_renovacion="2026-03", fecha_alta=_date(2022,7,18),  activo=False),
+                dict(apellidos="G\u00f3mez Ib\u00e1\u00f1ez",nombre="Salvador",dni_sip="29047183R",zona=1,sexo="hombre", telefono="966 807 890", direccion="C/ Mayor, 18, bajo B",                          mes_renovacion="2026-09", fecha_alta=_date(2023,4,1),   activo=True),
+                dict(apellidos="Herrero Prats",     nombre="Inmaculada",    dni_sip="84615029",  zona=1, sexo="mujer",    telefono="966 808 901", direccion="C/ Mart\u00ednez Alejos, 5, 2\u00baA",          mes_renovacion="2026-05", fecha_alta=_date(2024,1,22),  activo=True),
+                dict(apellidos="Iglesias Vidal",    nombre="Rogelio",       dni_sip="53702948J", zona=1, sexo="hombre",   telefono=None,          direccion="C/ Sant Vicent, 22, 1\u00baB",                  mes_renovacion="2026-07", fecha_alta=_date(2022,12,10), activo=True),
+                dict(apellidos="Jim\u00e9nez Colomer",nombre="Rosa",        dni_sip="67840315",  zona=1, sexo="mujer",    telefono="966 809 012", direccion="C/ Tom\u00e0s Ortu\u00f1o, 31, 3\u00baC",       mes_renovacion="2026-04", fecha_alta=_date(2023,8,7),   activo=True),
+                dict(apellidos="Le\u00f3n Asensio", nombre="Valentina",     dni_sip="19563047",  zona=1, sexo="mujer",    telefono="966 810 123", direccion="Avda. del Mediterr\u00e1neo, 67, 5\u00baA",    mes_renovacion="2026-10", fecha_alta=_date(2021,5,14),  activo=True),
+                # ── Zona 2 ────────────────────────────────────────────────────────────────
+                dict(apellidos="Mar\u00edn D\u00edaz",nombre="Consuelo",    dni_sip="80427631",  zona=2, sexo="no_define",telefono="966 811 234", direccion="C/ Ibiza, 6, 2\u00baD",                         mes_renovacion="2026-08", fecha_alta=_date(2022,5,30),  activo=False),
+                dict(apellidos="Mart\u00ednez Blasco",nombre="Rafael",      dni_sip="46083925T", zona=2, sexo="hombre",   telefono="966 812 345", direccion="Avda. de Mallorca, 23, 1\u00baA",               mes_renovacion="2026-03", fecha_alta=_date(2023,10,20), activo=True),
+                dict(apellidos="Navarro Ortega",    nombre="Asunci\u00f3n", dni_sip="73195460",  zona=2, sexo="mujer",    telefono="966 813 456", direccion="C/ Menorca, 14, bajo A",                        mes_renovacion="2026-05", fecha_alta=_date(2024,6,1),   activo=True),
+                dict(apellidos="Oliva Herrera",     nombre="Agust\u00edn",  dni_sip="31507284W", zona=2, sexo="hombre",   telefono=None,          direccion="C/ Almeria, 9, 3\u00baB",                       mes_renovacion="2026-07", fecha_alta=_date(2023,2,14),  activo=True),
+                dict(apellidos="Palomar Ruiz",      nombre="Encarnaci\u00f3n",dni_sip="94618352",zona=2, sexo="mujer",    telefono="966 814 567", direccion="C/ Lepanto, 17, 2\u00baC",                      mes_renovacion="2026-09", fecha_alta=_date(2022,9,25),  activo=True),
+                dict(apellidos="Ramos S\u00e1nchez",nombre="Joaqu\u00edn",  dni_sip="57829043Z", zona=2, sexo="hombre",   telefono="966 815 678", direccion="C/ Formentera, 4, 1\u00baA",                    mes_renovacion="2026-04", fecha_alta=_date(2024,1,8),   activo=False),
+                dict(apellidos="Reyes G\u00f3mez",  nombre="Teresa",        dni_sip="20734891",  zona=2, sexo="mujer",    telefono="966 816 789", direccion="C/ Canarias, 20, 4\u00baD",                     mes_renovacion="2026-06", fecha_alta=_date(2023,7,17),  activo=True),
+                dict(apellidos="Rico Ferrer",       nombre="Bernardo",      dni_sip="68305274",  zona=2, sexo="hombre",   telefono="966 817 890", direccion="Avda. de Europa, 38, 3\u00baA",                 mes_renovacion="2026-08", fecha_alta=_date(2022,3,11),  activo=True),
+                dict(apellidos="Romero Bernal",     nombre="Gloria",        dni_sip="42907163H", zona=2, sexo="mujer",    telefono="966 818 901", direccion="C/ del Rinc\u00f3n de Loix, 12, 2\u00baB",     mes_renovacion="2026-10", fecha_alta=_date(2021,8,22),  activo=True),
+                dict(apellidos="Ruiz Pons",         nombre="Pedro",         dni_sip="85023746",  zona=2, sexo="hombre",   telefono=None,          direccion="C/ Mart\u00ednez Alejos, 28, bajo",             mes_renovacion="2026-11", fecha_alta=_date(2020,11,3),  activo=True),
+                dict(apellidos="S\u00e1nchez Llobet",nombre="Dolores",      dni_sip="13678059",  zona=2, sexo="mujer",    telefono="966 819 012", direccion="C/ Ibiza, 15, 1\u00baC",                        mes_renovacion="2026-03", fecha_alta=_date(2024,4,25),  activo=True),
+                dict(apellidos="Segura Colomer",    nombre="Eduardo",       dni_sip="76041382A", zona=2, sexo="no_define",telefono="966 820 123", direccion="Avda. de Mallorca, 40, 5\u00baB",               mes_renovacion="2026-05", fecha_alta=_date(2023,1,30),  activo=True),
+                # ── Zona 3 ────────────────────────────────────────────────────────────────
+                dict(apellidos="Serra Campos",      nombre="Francisca",     dni_sip="39182607",  zona=3, sexo="mujer",    telefono="966 821 234", direccion="C/ Menorca, 3, 2\u00baA",                       mes_renovacion="2026-07", fecha_alta=_date(2024,5,8),   activo=True),
+                dict(apellidos="Soler Castillo",    nombre="Ignacio",       dni_sip="60497325B", zona=3, sexo="hombre",   telefono="966 822 345", direccion="C/ Gambo, 21, 1\u00baD",                        mes_renovacion="2026-09", fecha_alta=_date(2022,8,19),  activo=True),
+                dict(apellidos="Torres Morales",    nombre="Montserrat",    dni_sip="82614093",  zona=3, sexo="mujer",    telefono="966 823 456", direccion="C/ Almeria, 14, 3\u00baC",                      mes_renovacion="2026-04", fecha_alta=_date(2023,3,5),   activo=True),
+                dict(apellidos="\u00dabeda Reyes",  nombre="Juan",          dni_sip="25803741N", zona=3, sexo="hombre",   telefono=None,          direccion="Avda. del Mediterr\u00e1neo, 89, 2\u00baB",    mes_renovacion="2026-06", fecha_alta=_date(2024,7,14),  activo=True),
+                dict(apellidos="Vidal Gonz\u00e1lez",nombre="Natividad",   dni_sip="47916230",  zona=3, sexo="mujer",    telefono="966 824 567", direccion="C/ Lepanto, 6, bajo A",                         mes_renovacion="2026-08", fecha_alta=_date(2022,6,27),  activo=False),
+                dict(apellidos="Villanueva Mora",   nombre="Carlos",        dni_sip="93047185P", zona=3, sexo="hombre",   telefono="966 825 678", direccion="C/ Esperan\u00e7a, 18, 4\u00baA",              mes_renovacion="2026-10", fecha_alta=_date(2021,2,8),   activo=True),
+                dict(apellidos="Zaragoza Gil",      nombre="Nieves",        dni_sip="61308429",  zona=3, sexo="mujer",    telefono="966 826 789", direccion="C/ Ausi\u00e0s March, 25, 1\u00baA",            mes_renovacion="2026-11", fecha_alta=_date(2020,9,15),  activo=True),
+                dict(apellidos="Aguilar L\u00f3pez",nombre="Miguel",        dni_sip="54872013C", zona=3, sexo="hombre",   telefono="966 827 890", direccion="C/ La Mar, 11, 3\u00baB",                       mes_renovacion="2026-12", fecha_alta=_date(2020,4,20),  activo=True),
+                dict(apellidos="Alba Moreno",       nombre="Remedios",      dni_sip="28165094",  zona=3, sexo="mujer",    telefono=None,          direccion="C/ Sant Vicent, 34, 2\u00baC",                  mes_renovacion="2026-03", fecha_alta=_date(2024,8,11),  activo=True),
+                dict(apellidos="Alonso Villena",    nombre="Luis",          dni_sip="70429638D", zona=3, sexo="hombre",   telefono="966 828 901", direccion="Avda. de l'Aig\u00fcera, 16, 5\u00baD",         mes_renovacion="2026-05", fecha_alta=_date(2023,5,23),  activo=True),
+                dict(apellidos="\u00c1ngel Guti\u00e9rrez",nombre="Socorro",dni_sip="38950271",  zona=3, sexo="mujer",    telefono="966 829 012", direccion="C/ Mayor, 7, 1\u00baA",                          mes_renovacion="2026-07", fecha_alta=_date(2022,10,4),  activo=False),
+                dict(apellidos="Arcos Roca",        nombre="Santiago",      dni_sip="81643705E", zona=3, sexo="hombre",   telefono="966 830 123", direccion="C/ del Rinc\u00f3n de Loix, 27, bajo B",       mes_renovacion="2026-09", fecha_alta=_date(2021,12,17), activo=True),
+                # ── Zona 4 ────────────────────────────────────────────────────────────────
+                dict(apellidos="Arroyo Serrano",    nombre="Isabel",        dni_sip="16074392",  zona=4, sexo="mujer",    telefono="966 831 234", direccion="C/ Formentera, 9, 2\u00baA",                    mes_renovacion="2026-04", fecha_alta=_date(2024,9,30),  activo=True),
+                dict(apellidos="Aznar M\u00ednguez",nombre="Ram\u00f3n",   dni_sip="49237806F", zona=4, sexo="hombre",   telefono="966 832 345", direccion="C/ Canarias, 8, 3\u00baB",                      mes_renovacion="2026-06", fecha_alta=_date(2023,11,7),  activo=True),
+                dict(apellidos="Bravo Hidalgo",     nombre="Luisa",         dni_sip="72890134",  zona=4, sexo="mujer",    telefono=None,          direccion="Avda. de Europa, 55, 1\u00baC",                 mes_renovacion="2026-08", fecha_alta=_date(2022,4,16),  activo=True),
+                dict(apellidos="Bueno Climent",     nombre="Pascual",       dni_sip="35614920G", zona=4, sexo="hombre",   telefono="966 833 456", direccion="Avda. de Mallorca, 12, 4\u00baA",               mes_renovacion="2026-10", fecha_alta=_date(2021,7,29),  activo=True),
+                dict(apellidos="Caballero Flores",  nombre="Mar\u00eda",    dni_sip="98403257",  zona=4, sexo="mujer",    telefono="966 834 567", direccion="C/ Gambo, 16, bajo C",                          mes_renovacion="2026-11", fecha_alta=_date(2020,6,3),   activo=False),
+                dict(apellidos="Calvo Pastor",      nombre="Marcelino",     dni_sip="51728069L", zona=4, sexo="hombre",   telefono="966 835 678", direccion="C/ Ibiza, 11, 2\u00baD",                        mes_renovacion="2026-12", fecha_alta=_date(2020,1,18),  activo=True),
+                dict(apellidos="Campos Exp\u00f3sito",nombre="Milagros",   dni_sip="24396815",  zona=4, sexo="mujer",    telefono="966 836 789", direccion="C/ Menorca, 20, 3\u00baA",                       mes_renovacion="2026-03", fecha_alta=_date(2024,10,22), activo=True),
+                dict(apellidos="Cano Guerrero",     nombre="Alfonso",       dni_sip="67012438K", zona=4, sexo="hombre",   telefono=None,          direccion="C/ Lepanto, 3, 1\u00baB",                       mes_renovacion="2026-05", fecha_alta=_date(2023,12,9),  activo=True),
+                dict(apellidos="Castellano Castro", nombre="Petra",         dni_sip="89547103",  zona=4, sexo="no_define",telefono="966 837 890", direccion="C/ Ausi\u00e0s March, 38, 5\u00baC",            mes_renovacion="2026-07", fecha_alta=_date(2022,2,25),  activo=True),
+                dict(apellidos="Castro D\u00edaz",  nombre="Emilio",        dni_sip="43861259S", zona=4, sexo="hombre",   telefono="966 838 901", direccion="C/ Tom\u00e0s Ortu\u00f1o, 47, 2\u00baB",       mes_renovacion="2026-09", fecha_alta=_date(2021,10,6),  activo=True),
+                dict(apellidos="Climent Font",      nombre="Serafina",      dni_sip="17024896",  zona=4, sexo="mujer",    telefono="966 839 012", direccion="Avda. del Mediterr\u00e1neo, 22, 4\u00baD",    mes_renovacion="2026-11", fecha_alta=_date(2020,8,13),  activo=False),
+                dict(apellidos="Coll Rivas",        nombre="Sergio",        dni_sip="80273641V", zona=4, sexo="hombre",   telefono="966 840 123", direccion="C/ La Mar, 18, 1\u00baA",                       mes_renovacion="2026-12", fecha_alta=_date(2020,3,27),  activo=True),
+                dict(apellidos="D\u00edaz Alvarado",nombre="Trinidad",      dni_sip="52938407",  zona=4, sexo="no_define",telefono="966 841 234", direccion="Avda. de l'Aig\u00fcera, 9, 3\u00baC",          mes_renovacion="2026-02", fecha_alta=_date(2024,11,15), activo=True),
+                dict(apellidos="Exp\u00f3sito Arroyo",nombre="Alberto",     dni_sip="39605182Q", zona=4, sexo="hombre",   telefono=None,          direccion="C/ Sant Vicent, 5, 2\u00baA",                   mes_renovacion="2026-04", fecha_alta=_date(2023,4,21),  activo=True),
+            ]
+            for row in _SEED:
+                db2.add(CasoMayorACasa(**row))
+            db2.commit()
+            print(f"\u2705 {len(_SEED)} casos de ejemplo insertados")
+        else:
+            print("\u2139\ufe0f  Datos de ejemplo ya tienen sexo asignado, seed omitido")
+    finally:
+        db2.close()
+
+    yield
+    print("\U0001f6d1 Apagando SocialApp API...")
 
 
 # ============================================================
@@ -56,23 +161,14 @@ app = FastAPI(
 # CORS (Cross-Origin Resource Sharing)
 # ============================================================
 
-# 5. Lista de orígenes permitidos para hablar con este servidor
-#    Añade aquí la URL de tu app de escritorio o web frontend
-origins = [
-    "http://localhost",           # Servidor local genérico
-    "http://localhost:3000",      # Frontend React/Next.js típico
-    "http://localhost:8080",      # Otro puerto común de frontends
-    # "https://tu-app.com",       # ← Añade tu dominio en producción
-]
-
-# 6. Añadimos el middleware de CORS a la app
-#    Esto se ejecuta en cada petición antes de que llegue a tus endpoints
+# CORS: abierto a cualquier origen
+# (la API está protegida con JWT, así que esto es seguro)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,        # Quién puede llamar a la API
-    allow_credentials=True,       # Permite enviar cookies/tokens
-    allow_methods=["*"],          # GET, POST, PUT, DELETE… todos permitidos
-    allow_headers=["*"],          # Cualquier cabecera HTTP permitida
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ============================================================
@@ -82,9 +178,9 @@ app.add_middleware(
 # prefix="/users" significa que todas las rutas del router empezarán por /users
 # tags=["Usuarios"] agrupa los endpoints en la documentación /docs
 
-app.include_router(users.router,       prefix="/users",       tags=["Usuarios"])
+app.include_router(auth.router,         prefix="/auth",        tags=["Autenticación"])
+app.include_router(users.router,        prefix="/users",       tags=["Usuarios"])
 app.include_router(mayor_a_casa.router, prefix="/mayor-a-casa", tags=["Mayor a Casa"])
-# app.include_router(posts.router, prefix="/posts", tags=["Posts"])  ← futuro
 
 # ============================================================
 # ARCHIVOS ESTÁTICOS (HTML, CSS, JS del frontend)

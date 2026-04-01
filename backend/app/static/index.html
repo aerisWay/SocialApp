@@ -1,131 +1,184 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SocialApp — Gestión de Servicios Sociales</title>
-  <meta name="description" content="Sistema de gestión de servicios sociales — Mayor a Casa, Dependencia, Teleasistencia y más." />
+  <meta name="description" content="Sistema de gestión de servicios sociales." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/app.css" />
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════ TOPBAR ══════════════ -->
-  <header class="topbar">
-    <div class="topbar-brand">
-      <div class="brand-icon">⚕</div>
-      <div>
-        <span class="brand-name">SocialApp</span>
-        <span class="brand-sep">·</span>
-        <span class="brand-subtitle">Gestión de Servicios Sociales</span>
+  <!-- ═══════════════════ PANTALLA DE LOGIN ═══════════════════ -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+
+      <div class="login-brand">
+        <div class="login-icon">🤝</div>
+        <h1 class="login-title">SocialApp</h1>
+        <p class="login-sub">Acceso para departamentos — Servicios Sociales</p>
       </div>
+
+      <form id="login-form" class="login-form" novalidate>
+        <div class="form-error hidden" id="login-error">
+          <span>✕</span>
+          <span id="login-error-msg">Usuario o contraseña incorrectos.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="login-user">Usuario del departamento</label>
+          <input type="text" id="login-user" placeholder="ej: promocion"
+            autocomplete="username" spellcheck="false" />
+        </div>
+
+        <div class="form-group">
+          <label for="login-pass">Contraseña</label>
+          <div class="pwd-wrap">
+            <input type="password" id="login-pass" placeholder="••••••••"
+              autocomplete="current-password" />
+            <button type="button" id="toggle-pwd" class="toggle-pwd" title="Mostrar/ocultar">
+              <span id="pwd-eye">👁</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+          Iniciar sesión
+        </button>
+      </form>
+
+      <p class="login-footer">La sesión dura 8 horas · Token cifrado JWT</p>
     </div>
-    <nav class="topbar-nav">
-      <button class="main-tab active" id="tab-promocion">Servicio de Promoción</button>
-    </nav>
-    <div class="topbar-badge">v1.0 · Prototipo</div>
-  </header>
+  </div>
 
-  <!-- ═══════════════════════════════ SUB-TABS ════════════════ -->
-  <nav class="sub-tabs" id="subtabs-promocion">
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">PAAD</button>
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Dependencia</button>
-    <button class="sub-tab active"      id="subtab-mayor">Mayor a Casa</button>
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Menjar a Casa</button>
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Teleasistencia</button>
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Ruta a la Autonomía</button>
-    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Proyecto Brújula</button>
-  </nav>
+  <!-- ═══════════════════ APLICACIÓN PRINCIPAL ════════════════ -->
+  <div id="main-app" class="hidden">
 
-  <!-- ═══════════════════════════ CONTENIDO PRINCIPAL ═════════ -->
-  <main class="content">
-
-    <!-- ── Vista: Mayor a Casa ─────────────────────────────── -->
-    <section id="view-mayor" class="view active">
-
-      <!-- Cabecera de la sección -->
-      <div class="view-header">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon">🤝</div>
         <div>
-          <h1 class="view-title">Mayor a Casa</h1>
-          <p class="view-desc">Servicio de atención domiciliaria — gestión de casos</p>
-        </div>
-        <div class="view-actions">
-          <button class="btn btn-pdf" id="btn-pdf">
-            <span>📄</span> Generar Informe PDF
-          </button>
-          <button class="btn btn-primary" id="btn-nuevo">
-            <span>＋</span> Nuevo caso
-          </button>
+          <span class="brand-name">SocialApp</span>
+          <span class="brand-sep">·</span>
+          <span class="brand-subtitle" id="dept-name-display">Cargando…</span>
         </div>
       </div>
-
-      <!-- Estadísticas rápidas -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-total">—</div>
-          <div class="stat-label">Total casos</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value success" id="stat-activos">—</div>
-          <div class="stat-label">Activos</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value muted" id="stat-bajas">—</div>
-          <div class="stat-label">Dados de baja</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value accent" id="stat-zonas">—</div>
-          <div class="stat-label">Zonas con casos</div>
-        </div>
+      <nav class="topbar-nav">
+        <button class="main-tab active">Servicio de Promoción</button>
+      </nav>
+      <div class="topbar-right">
+        <div class="topbar-badge">v1.0 · Prototipo</div>
+        <button class="btn-theme" id="btn-theme" title="Cambiar tema claro/oscuro">🌙</button>
+        <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
+          Cerrar sesión
+        </button>
       </div>
+    </header>
 
-      <!-- Tabla de casos -->
-      <div class="table-wrapper">
-        <table class="data-table" id="tabla-casos">
-          <thead>
-            <tr>
-              <th>Apellidos, Nombre</th>
-              <th>DNI / SIP</th>
-              <th>Zona</th>
-              <th>Teléfono</th>
-              <th>Mes Renov.</th>
-              <th>Fecha Alta</th>
-              <th>Estado</th>
-              <th class="th-actions">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-casos">
-            <tr>
-              <td colspan="8" class="loading-cell">
-                <div class="spinner"></div>
-                <span>Cargando casos...</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- SUB-TABS -->
+    <nav class="sub-tabs">
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">📋 PAAD</button>
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">♿ Dependencia</button>
+      <button class="sub-tab active" id="subtab-mayor">🏠 Mayor a Casa</button>
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">🍽️ Menjar a Casa</button>
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">📞 Teleasistencia</button>
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">🗺️ Ruta a la Autonomía</button>
+      <button class="sub-tab coming-soon" data-tip="Próximamente disponible">🧭 Proyecto Brújula</button>
+    </nav>
 
-    </section>
+    <!-- CONTENIDO -->
+    <main class="content">
+      <section id="view-mayor" class="view active">
 
-  </main>
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Mayor a Casa</h1>
+            <p class="view-desc">Servicio de atención domiciliaria — gestión de casos</p>
+          </div>
+          <div class="view-actions">
+            <div class="btn-split-group" id="pdf-group">
+              <button class="btn btn-pdf btn-split-main" id="btn-pdf"><span>📊</span> Generar Informe PDF</button>
+              <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-toggle" title="Seleccionar tipo de informe">▾</button>
+              <div class="split-menu hidden" id="pdf-menu">
+                <button class="split-menu-item" data-tipo="activos">📋 Todos los casos activos</button>
+                <button class="split-menu-item" data-tipo="renovacion">📅 Renovación del mes actual</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btn-nuevo"><span>✦</span> Nuevo caso</button>
+          </div>
+        </div>
 
-  <!-- ═══════════════════════════════════ MODAL ═══════════════ -->
+        <div class="stats-row">
+          <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total casos</div></div>
+          <div class="stat-card card-green"><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label">Activos</div></div>
+          <div class="stat-card card-gray"><span class="stat-icon">📁</span><div class="stat-value muted" id="stat-bajas">—</div><div class="stat-label">Dados de baja</div></div>
+          <div class="stat-card card-cyan"><span class="stat-icon">📍</span><div class="stat-value accent" id="stat-zonas">—</div><div class="stat-label">Zonas con casos</div></div>
+          <div class="stat-card card-amber"><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label">Hombres</div></div>
+          <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label">Mujeres</div></div>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="toolbar-group">
+            <span class="toolbar-label">Zona:</span>
+            <div id="zona-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="filter-btn active" data-zona="">Todas</button>
+              <button class="filter-btn" data-zona="1">Zona 1</button>
+              <button class="filter-btn" data-zona="2">Zona 2</button>
+              <button class="filter-btn" data-zona="3">Zona 3</button>
+              <button class="filter-btn" data-zona="4">Zona 4</button>
+            </div>
+          </div>
+          <div class="toolbar-group">
+            <span class="toolbar-label">Ordenar:</span>
+            <button class="sort-btn active" data-sort="nombre">Nombre <span class="sort-dir" id="dir-nombre">↑</span></button>
+            <button class="sort-btn" data-sort="renovacion">Renovación <span class="sort-dir" id="dir-renovacion">↕</span></button>
+            <button class="sort-btn" data-sort="activo">Estado <span class="sort-dir" id="dir-activo">↕</span></button>
+            <span class="results-count" id="results-count">0 resultados</span>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Apellidos, Nombre</th>
+                <th>DNI / SIP</th>
+                <th>Zona</th>
+                <th>Sexo</th>
+                <th>Teléfono</th>
+                <th>Mes Renov.</th>
+                <th>Fecha Alta</th>
+                <th>Estado</th>
+                <th class="th-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-casos">
+              <tr><td colspan="9" class="loading-cell"><div class="spinner"></div><span>Cargando casos…</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    </main>
+
+  </div><!-- fin #main-app -->
+
+  <!-- ═══════════════════════════════ MODAL ═══════════════════ -->
   <div class="modal-backdrop hidden" id="modal-backdrop">
-    <div class="modal-card" id="modal-card">
-
+    <div class="modal-card">
       <div class="modal-header">
         <div>
           <h2 class="modal-title" id="modal-title">Nuevo Caso</h2>
-          <p  class="modal-subtitle" id="modal-subtitle">Rellena los datos del nuevo caso</p>
+          <p class="modal-subtitle" id="modal-subtitle">Rellena los datos del caso</p>
         </div>
         <button class="modal-close" id="modal-close" title="Cerrar">✕</button>
       </div>
 
       <form class="modal-body" id="caso-form" novalidate>
         <div class="form-grid">
-
-          <!-- Apellidos / Nombre -->
           <div class="form-group">
             <label for="f-apellidos">Apellidos <span class="req">*</span></label>
             <input type="text" id="f-apellidos" name="apellidos" placeholder="García López" required />
@@ -134,8 +187,6 @@
             <label for="f-nombre">Nombre <span class="req">*</span></label>
             <input type="text" id="f-nombre" name="nombre" placeholder="María" required />
           </div>
-
-          <!-- DNI/SIP / Zona -->
           <div class="form-group">
             <label for="f-dni">DNI / SIP <span class="req">*</span></label>
             <input type="text" id="f-dni" name="dni_sip" placeholder="12345678X" required />
@@ -150,18 +201,23 @@
               <option value="4">Zona 4</option>
             </select>
           </div>
-
-          <!-- Teléfono / Mes renovación -->
+          <div class="form-group">
+            <label for="f-sexo">Sexo</label>
+            <select id="f-sexo" name="sexo">
+              <option value="">— No especificado —</option>
+              <option value="hombre">Hombre</option>
+              <option value="mujer">Mujer</option>
+              <option value="no_define">No se define</option>
+            </select>
+          </div>
           <div class="form-group">
             <label for="f-tel">Teléfono</label>
             <input type="tel" id="f-tel" name="telefono" placeholder="666 000 000" />
           </div>
           <div class="form-group">
             <label for="f-renov">Mes de renovación</label>
-            <input type="month" id="f-renov" name="mes_renovacion" />
+            <input type="month" id="f-renov" name="mes_renovacion" min="2026-01" />
           </div>
-
-          <!-- Fecha Alta / Fecha Baja -->
           <div class="form-group">
             <label for="f-alta">Fecha de alta</label>
             <input type="date" id="f-alta" name="fecha_alta" />
@@ -170,8 +226,6 @@
             <label for="f-baja">Fecha de baja</label>
             <input type="date" id="f-baja" name="fecha_baja" />
           </div>
-
-          <!-- Dirección / Estado activo -->
           <div class="form-group">
             <label for="f-dir">Dirección</label>
             <input type="text" id="f-dir" name="direccion" placeholder="Calle Mayor, 1, 2º A" />
@@ -186,33 +240,23 @@
               <span class="toggle-label" id="toggle-label-text">Activo</span>
             </div>
           </div>
-
-          <!-- Observaciones (ancho completo) -->
           <div class="form-group span-2">
             <label for="f-obs">Observaciones / Notas</label>
-            <textarea id="f-obs" name="observaciones" rows="3"
-              placeholder="Información adicional sobre el caso..."></textarea>
+            <textarea id="f-obs" name="observaciones" rows="3" placeholder="Información adicional…"></textarea>
           </div>
-
         </div>
       </form>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar">
-          🗑 Eliminar caso
-        </button>
+        <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar">🗑️ Eliminar caso</button>
         <div class="modal-footer-right">
-          <button type="button" class="btn btn-ghost"    id="modal-cancel">Cancelar</button>
-          <button type="submit" class="btn btn-primary"  id="modal-submit" form="caso-form">
-            Guardar
-          </button>
+          <button type="button" class="btn btn-ghost" id="modal-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="modal-submit" form="caso-form">Guardar</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ═══════════════════════════ TOAST (notificaciones) ══════ -->
   <div class="toast-container" id="toast-container"></div>
 
   <script src="/static/js/app.js"></script>

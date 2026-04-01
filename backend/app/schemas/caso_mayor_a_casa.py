@@ -16,6 +16,7 @@ class CasoCreate(BaseModel):
 
     # Opcionales
     zona:           Optional[int]  = None   # 1, 2, 3 o 4
+    sexo:           Optional[str]  = None   # 'hombre' | 'mujer' | 'no_define'
     mes_renovacion: Optional[str]  = None   # "YYYY-MM"
     telefono:       Optional[str]  = None
     direccion:      Optional[str]  = None
@@ -23,6 +24,13 @@ class CasoCreate(BaseModel):
     fecha_baja:     Optional[date] = None
     activo:         bool           = True
     observaciones:  Optional[str]  = None
+
+    @field_validator("sexo")
+    @classmethod
+    def sexo_valido(cls, v):
+        if v is not None and v not in ("hombre", "mujer", "no_define"):
+            raise ValueError("El sexo debe ser 'hombre', 'mujer' o 'no_define'")
+        return v or None
 
     @field_validator("zona")
     @classmethod
@@ -48,6 +56,7 @@ class CasoUpdate(BaseModel):
     nombre:         Optional[str]  = None
     dni_sip:        Optional[str]  = None
     zona:           Optional[int]  = None
+    sexo:           Optional[str]  = None
     mes_renovacion: Optional[str]  = None
     telefono:       Optional[str]  = None
     direccion:      Optional[str]  = None
@@ -64,6 +73,7 @@ class CasoResponse(BaseModel):
     nombre:         str
     dni_sip:        str
     zona:           Optional[int]
+    sexo:           Optional[str]
     mes_renovacion: Optional[str]
     telefono:       Optional[str]
     direccion:      Optional[str]

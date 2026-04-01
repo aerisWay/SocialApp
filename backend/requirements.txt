@@ -23,6 +23,7 @@ pydantic-settings==2.5.2  # Lee el archivo .env automáticamente
 python-dotenv==1.0.1      # Carga variables de entorno desde .env
 
 # --- Seguridad / Autenticación ---
+bcrypt==4.0.1             # Necesario pin por incompatibilidad de passlib 1.7.4 con 4.1.0+
 passlib[bcrypt]==1.7.4    # Hashea contraseñas de forma segura
 python-jose[cryptography]==3.3.0  # Genera y valida tokens JWT
 

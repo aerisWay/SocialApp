@@ -46,6 +46,10 @@ class CasoMayorACasa(Base):
     fecha_alta = Column(Date, nullable=True)
     fecha_baja = Column(Date, nullable=True)
 
+    # ── Sexo ──────────────────────────────────────────────────
+    # Valores: 'hombre' | 'mujer' | 'no_define' | None
+    sexo = Column(String(10), nullable=True)
+
     # ── Estado ────────────────────────────────────────────────
     activo = Column(Boolean, default=True, nullable=False)
 

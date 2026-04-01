@@ -18,11 +18,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # --- Entorno ---
-    ENVIRONMENT: str = "development"   # "development" | "production"
+    ENVIRONMENT: str = "development"
     DEBUG: bool = True
 
     # --- Nombre de la app ---
     APP_NAME: str = "SocialApp"
+
+    # --- Credenciales de departamentos (cámbialo en producción con variable de entorno) ---
+    # En Railway: añade DEPT_PROMOCION_PASSWORD en el panel de variables
+    DEPT_PROMOCION_PASSWORD: str = "Promocion2026"
 
     class Config:
         # Le dice a pydantic que lea las variables desde el archivo .env
