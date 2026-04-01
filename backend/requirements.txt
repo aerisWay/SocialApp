@@ -1,0 +1,30 @@
+# ============================================================
+# requirements.txt — Librerías que necesita el proyecto
+# ============================================================
+# Instálalas con:  pip install -r requirements.txt
+
+# --- Framework principal ---
+fastapi==0.115.0          # El framework web que usamos
+
+# --- Archivos estáticos y PDF ---
+aiofiles==23.2.1          # Necesario para que FastAPI sirva archivos estáticos (HTML/CSS/JS)
+reportlab==4.2.5          # Genera PDFs profesionales desde Python, sin dependencias externas
+
+# --- Servidor ASGI (ejecuta FastAPI) ---
+uvicorn[standard]==0.30.6 # El servidor que arranca la app
+
+# --- Base de datos ---
+sqlalchemy==2.0.36        # ORM: conecta Python con PostgreSQL
+psycopg2-binary==2.9.9    # Driver de PostgreSQL para Python
+alembic==1.13.3           # Migraciones de base de datos
+
+# --- Configuración / Variables de entorno ---
+pydantic-settings==2.5.2  # Lee el archivo .env automáticamente
+python-dotenv==1.0.1      # Carga variables de entorno desde .env
+
+# --- Seguridad / Autenticación ---
+passlib[bcrypt]==1.7.4    # Hashea contraseñas de forma segura
+python-jose[cryptography]==3.3.0  # Genera y valida tokens JWT
+
+# --- Formularios y subida de archivos ---
+python-multipart==0.0.12  # Necesario para recibir formularios HTML

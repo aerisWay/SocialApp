@@ -1,0 +1,30 @@
+# ============================================================
+# .gitignore — Archivos que NO se suben a Git
+# ============================================================
+
+# Variables de entorno con datos secretos (contraseñas, claves…)
+.env
+backend/.env
+
+# Entornos virtuales de Python (por si alguien los crea localmente)
+venv/
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Archivos de pytest
+.pytest_cache/
+.coverage
+
+# Carpeta de build de Docker (a veces se generan)
+*.egg-info/
+dist/
+build/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

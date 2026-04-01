@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialApp — Gestión de Servicios Sociales</title>
+  <meta name="description" content="Sistema de gestión de servicios sociales — Mayor a Casa, Dependencia, Teleasistencia y más." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════ TOPBAR ══════════════ -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-icon">⚕</div>
+      <div>
+        <span class="brand-name">SocialApp</span>
+        <span class="brand-sep">·</span>
+        <span class="brand-subtitle">Gestión de Servicios Sociales</span>
+      </div>
+    </div>
+    <nav class="topbar-nav">
+      <button class="main-tab active" id="tab-promocion">Servicio de Promoción</button>
+    </nav>
+    <div class="topbar-badge">v1.0 · Prototipo</div>
+  </header>
+
+  <!-- ═══════════════════════════════ SUB-TABS ════════════════ -->
+  <nav class="sub-tabs" id="subtabs-promocion">
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">PAAD</button>
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Dependencia</button>
+    <button class="sub-tab active"      id="subtab-mayor">Mayor a Casa</button>
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Menjar a Casa</button>
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Teleasistencia</button>
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Ruta a la Autonomía</button>
+    <button class="sub-tab coming-soon" data-tip="Próximamente disponible">Proyecto Brújula</button>
+  </nav>
+
+  <!-- ═══════════════════════════ CONTENIDO PRINCIPAL ═════════ -->
+  <main class="content">
+
+    <!-- ── Vista: Mayor a Casa ─────────────────────────────── -->
+    <section id="view-mayor" class="view active">
+
+      <!-- Cabecera de la sección -->
+      <div class="view-header">
+        <div>
+          <h1 class="view-title">Mayor a Casa</h1>
+          <p class="view-desc">Servicio de atención domiciliaria — gestión de casos</p>
+        </div>
+        <div class="view-actions">
+          <button class="btn btn-pdf" id="btn-pdf">
+            <span>📄</span> Generar Informe PDF
+          </button>
+          <button class="btn btn-primary" id="btn-nuevo">
+            <span>＋</span> Nuevo caso
+          </button>
+        </div>
+      </div>
+
+      <!-- Estadísticas rápidas -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total casos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value success" id="stat-activos">—</div>
+          <div class="stat-label">Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value muted" id="stat-bajas">—</div>
+          <div class="stat-label">Dados de baja</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value accent" id="stat-zonas">—</div>
+          <div class="stat-label">Zonas con casos</div>
+        </div>
+      </div>
+
+      <!-- Tabla de casos -->
+      <div class="table-wrapper">
+        <table class="data-table" id="tabla-casos">
+          <thead>
+            <tr>
+              <th>Apellidos, Nombre</th>
+              <th>DNI / SIP</th>
+              <th>Zona</th>
+              <th>Teléfono</th>
+              <th>Mes Renov.</th>
+              <th>Fecha Alta</th>
+              <th>Estado</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-casos">
+            <tr>
+              <td colspan="8" class="loading-cell">
+                <div class="spinner"></div>
+                <span>Cargando casos...</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════ MODAL ═══════════════ -->
+  <div class="modal-backdrop hidden" id="modal-backdrop">
+    <div class="modal-card" id="modal-card">
+
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="modal-title">Nuevo Caso</h2>
+          <p  class="modal-subtitle" id="modal-subtitle">Rellena los datos del nuevo caso</p>
+        </div>
+        <button class="modal-close" id="modal-close" title="Cerrar">✕</button>
+      </div>
+
+      <form class="modal-body" id="caso-form" novalidate>
+        <div class="form-grid">
+
+          <!-- Apellidos / Nombre -->
+          <div class="form-group">
+            <label for="f-apellidos">Apellidos <span class="req">*</span></label>
+            <input type="text" id="f-apellidos" name="apellidos" placeholder="García López" required />
+          </div>
+          <div class="form-group">
+            <label for="f-nombre">Nombre <span class="req">*</span></label>
+            <input type="text" id="f-nombre" name="nombre" placeholder="María" required />
+          </div>
+
+          <!-- DNI/SIP / Zona -->
+          <div class="form-group">
+            <label for="f-dni">DNI / SIP <span class="req">*</span></label>
+            <input type="text" id="f-dni" name="dni_sip" placeholder="12345678X" required />
+          </div>
+          <div class="form-group">
+            <label for="f-zona">Zona</label>
+            <select id="f-zona" name="zona">
+              <option value="">— Sin asignar —</option>
+              <option value="1">Zona 1</option>
+              <option value="2">Zona 2</option>
+              <option value="3">Zona 3</option>
+              <option value="4">Zona 4</option>
+            </select>
+          </div>
+
+          <!-- Teléfono / Mes renovación -->
+          <div class="form-group">
+            <label for="f-tel">Teléfono</label>
+            <input type="tel" id="f-tel" name="telefono" placeholder="666 000 000" />
+          </div>
+          <div class="form-group">
+            <label for="f-renov">Mes de renovación</label>
+            <input type="month" id="f-renov" name="mes_renovacion" />
+          </div>
+
+          <!-- Fecha Alta / Fecha Baja -->
+          <div class="form-group">
+            <label for="f-alta">Fecha de alta</label>
+            <input type="date" id="f-alta" name="fecha_alta" />
+          </div>
+          <div class="form-group">
+            <label for="f-baja">Fecha de baja</label>
+            <input type="date" id="f-baja" name="fecha_baja" />
+          </div>
+
+          <!-- Dirección / Estado activo -->
+          <div class="form-group">
+            <label for="f-dir">Dirección</label>
+            <input type="text" id="f-dir" name="direccion" placeholder="Calle Mayor, 1, 2º A" />
+          </div>
+          <div class="form-group form-group-toggle">
+            <label>Estado del caso</label>
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" id="f-activo" name="activo" checked />
+                <span class="toggle-track"></span>
+              </label>
+              <span class="toggle-label" id="toggle-label-text">Activo</span>
+            </div>
+          </div>
+
+          <!-- Observaciones (ancho completo) -->
+          <div class="form-group span-2">
+            <label for="f-obs">Observaciones / Notas</label>
+            <textarea id="f-obs" name="observaciones" rows="3"
+              placeholder="Información adicional sobre el caso..."></textarea>
+          </div>
+
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar">
+          🗑 Eliminar caso
+        </button>
+        <div class="modal-footer-right">
+          <button type="button" class="btn btn-ghost"    id="modal-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary"  id="modal-submit" form="caso-form">
+            Guardar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ TOAST (notificaciones) ══════ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
