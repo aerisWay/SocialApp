@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # --- Base de datos ---
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/socialapp_db"
+    DATABASE_URL: str  # Required — must be set via environment variable (no default)
 
     # --- Seguridad / JWT ---
     SECRET_KEY: str = "cambia-esto-por-una-clave-secreta-muy-larga"
