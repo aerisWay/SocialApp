@@ -12,12 +12,12 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 
 # ---- Motor de base de datos ----
-# create_engine crea la conexión real con PostgreSQL usando la URL del .env
+# create_engine crea la conexión real con PostgreSQL
 engine = create_engine(
     settings.DATABASE_URL,
-    # pool_pre_ping=True  ← reactiva conexiones caídas automáticamente
-    # (lo activaremos cuando conectemos la BD real)
+    pool_pre_ping=True,  # Reactiva conexiones caídas (necesario en Railway/cloud)
 )
+
 
 # ---- Fábrica de sesiones ----
 # Cada petición HTTP abre una "sesión" (conversación temporal con la BD)
