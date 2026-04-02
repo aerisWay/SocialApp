@@ -149,17 +149,17 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
         if second_logo.exists():
             try:
                 canvas.drawImage(
-                    str(second_logo), x_right - 2.2 * cm, 0.8 * cm,
-                    width=2 * cm, height=logo_h, preserveAspectRatio=True, mask='auto',
+                    str(second_logo), x_right - 4.2 * cm, 0.8 * cm,
+                    width=4 * cm, height=1.6 * cm, preserveAspectRatio=True, mask='auto',
                 )
-                x_right -= 2.5 * cm
+                x_right -= 4.5 * cm
             except Exception:
                 pass
         if main_logo.exists():
             try:
                 canvas.drawImage(
-                    str(main_logo), x_right - 2.2 * cm, 0.8 * cm,
-                    width=2 * cm, height=logo_h, preserveAspectRatio=True, mask='auto',
+                    str(main_logo), x_right - 1.2 * cm, 0.8 * cm,
+                    width=1 * cm, height=0.4 * cm, preserveAspectRatio=True, mask='auto',
                 )
             except Exception:
                 pass

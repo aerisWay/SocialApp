@@ -97,6 +97,24 @@ class CasoUpdate(BaseModel):
     activo:         Optional[bool] = None
     observaciones:  Optional[str]  = None
 
+    @field_validator("dni")
+    @classmethod
+    def dni_valido(cls, v):
+        if v is not None and v != '':
+            if not RE_DNI.match(v):
+                raise ValueError("El DNI debe tener 8 dígitos y 1 letra (ej: 12345678X)")
+            return v
+        return None
+
+    @field_validator("sip")
+    @classmethod
+    def sip_valido(cls, v):
+        if v is not None and v != '':
+            if not RE_SIP.match(v):
+                raise ValueError("El SIP debe tener exactamente 8 dígitos")
+            return v
+        return None
+
 
 # ── SALIDA: lo que devuelve la API ────────────────────────────
 class CasoResponse(BaseModel):

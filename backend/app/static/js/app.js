@@ -248,16 +248,25 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function highlightMatch(text, query) {
+  if (!query || !text) return esc(text);
+  const escapedText = esc(text);
+  const escapedQuery = esc(query);
+  const regex = new RegExp(`(${escapedQuery})`, 'gi');
+  return escapedText.replace(regex, '<span class="sip-highlight">$1</span>');
+}
+
 // ── Validación DNI / SIP ─────────────────────────────────────
 
 const RE_DNI = /^\d{8}[A-Za-z]$/;
 const RE_SIP = /^\d{8}$/;
 
 function validarDniSip(dni, sip) {
-  if (!dni && !sip) return t('val_dni_or_sip');
-  if (dni && !RE_DNI.test(dni)) return t('val_dni_bad');
-  if (sip && !RE_SIP.test(sip)) return t('val_sip_bad');
-  return null;
+  let errors = [];
+  if (!dni && !sip) errors.push('val_dni_or_sip');
+  if (dni && !RE_DNI.test(dni)) errors.push('val_dni_bad');
+  if (sip && !RE_SIP.test(sip)) errors.push('val_sip_bad');
+  return errors.length ? errors : null;
 }
 
 // ── Autenticación ─────────────────────────────────────────────
@@ -378,10 +387,10 @@ function getFilteredSorted() {
     list = list.filter(c => c.zona === state.filterZona);
   }
 
-  // SIP search filter
+  // SIP search filter (case-insensitive)
   if (state.sipSearch) {
-    const q = state.sipSearch;
-    list = list.filter(c => c.sip && c.sip.includes(q));
+    const q = state.sipSearch.toLowerCase();
+    list = list.filter(c => c.sip && c.sip.toLowerCase().includes(q));
   }
 
   list.sort((a, b) => {
@@ -452,7 +461,7 @@ function renderTabla() {
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
       <td>${esc(c.dni) || '—'}</td>
-      <td>${esc(c.sip) || '—'}</td>
+      <td>${highlightMatch(c.sip, state.sipSearch) || '—'}</td>
       <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
       <td>${sexLabels[c.sexo] || '—'}</td>
       <td>${esc(c.telefono) || '—'}</td>
@@ -508,9 +517,15 @@ function toggleLang() {
   state.lang = state.lang === 'es' ? 'val' : 'es';
   localStorage.setItem('socialapp_lang', state.lang);
   applyI18n();
+  // Refresh entire UI
   renderTabla();
   renderStats();
-  updateToggleLabel();
+  if (state.editingId) {
+    const caso = state.casos.find(c => c.id === state.editingId);
+    if (caso) abrirModal(caso);
+  } else if (!g('modal-backdrop').classList.contains('hidden')) {
+    abrirModal();
+  }
 }
 
 // ── Modal ─────────────────────────────────────────────────────
@@ -565,14 +580,27 @@ async function onFormSubmit(e) {
   const apellidos = g('f-apellidos').value.trim();
   const nombre = g('f-nombre').value.trim();
 
+  const valErrors = validarDniSip(dni, sip);
+  
+  // Clean previous errors
+  ['f-apellidos','f-nombre','f-dni','f-sip'].forEach(id => g(id).classList.remove('input-error'));
+
   if (!apellidos || !nombre) {
+    if (!apellidos) g('f-apellidos').classList.add('input-error');
+    if (!nombre) g('f-nombre').classList.add('input-error');
     toast(t('val_required'), 'error');
     return;
   }
 
-  const valErr = validarDniSip(dni, sip);
-  if (valErr) {
-    toast(valErr, 'error');
+  if (valErrors) {
+    if (valErrors.includes('val_dni_or_sip')) {
+      g('f-dni').classList.add('input-error');
+      g('f-sip').classList.add('input-error');
+    }
+    if (valErrors.includes('val_dni_bad')) g('f-dni').classList.add('input-error');
+    if (valErrors.includes('val_sip_bad')) g('f-sip').classList.add('input-error');
+    
+    toast(t(valErrors[0]), 'error');
     return;
   }
 

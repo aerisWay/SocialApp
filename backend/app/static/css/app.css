@@ -628,16 +628,38 @@ a { color: var(--accent); }
   position: absolute; left: 10px; font-size: 0.85rem; pointer-events: none;
 }
 .sip-search {
-  padding: 5px 10px 5px 32px; width: 180px;
-  font-size: 0.82rem; color: var(--text-1);
-  background: var(--bg-3); border: 1px solid var(--border);
-  border-radius: 20px; outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, width 0.2s;
+  padding: 8px 12px 8px 36px; width: 200px;
+  font-size: 0.85rem; color: var(--text-1);
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 24px; outline: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 .sip-search::placeholder { color: var(--text-3); }
 .sip-search:focus {
-  border-color: var(--accent); width: 220px;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  border-color: var(--accent); width: 280px;
+  background: var(--bg-2);
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.15), inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* SIP Real-time Highlight */
+.sip-highlight {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fff;
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Validation Errors */
+.input-error {
+  border-color: var(--danger) !important;
+  background: rgba(244, 63, 94, 0.03) !important;
+}
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2) !important;
 }
 
 /* Language toggle */

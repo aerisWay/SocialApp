@@ -126,10 +126,10 @@
             <span class="toolbar-label" data-i18n="lbl_zona">Zona:</span>
             <div id="zona-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
               <button class="filter-btn active" data-zona="" data-i18n="zona_todas">Todas</button>
-              <button class="filter-btn" data-zona="1">Zona 1</button>
-              <button class="filter-btn" data-zona="2">Zona 2</button>
-              <button class="filter-btn" data-zona="3">Zona 3</button>
-              <button class="filter-btn" data-zona="4">Zona 4</button>
+              <button class="filter-btn" data-zona="1"><span data-i18n="lbl_zona">Zona:</span> 1</button>
+              <button class="filter-btn" data-zona="2"><span data-i18n="lbl_zona">Zona:</span> 2</button>
+              <button class="filter-btn" data-zona="3"><span data-i18n="lbl_zona">Zona:</span> 3</button>
+              <button class="filter-btn" data-zona="4"><span data-i18n="lbl_zona">Zona:</span> 4</button>
             </div>
           </div>
           <div class="toolbar-group">
@@ -207,7 +207,7 @@
           <div class="form-group">
             <label for="f-zona" data-i18n="lbl_zona_field">Zona</label>
             <select id="f-zona" name="zona">
-              <option value="">— Sin asignar —</option>
+              <option value="" data-i18n="opt_no_asignar">— Sin asignar —</option>
               <option value="1">Zona 1</option>
               <option value="2">Zona 2</option>
               <option value="3">Zona 3</option>
@@ -217,10 +217,10 @@
           <div class="form-group">
             <label for="f-sexo" data-i18n="lbl_sexo">Sexo</label>
             <select id="f-sexo" name="sexo">
-              <option value="">— No especificado —</option>
-              <option value="hombre">Hombre</option>
-              <option value="mujer">Mujer</option>
-              <option value="no_define">No se define</option>
+              <option value="" data-i18n="opt_no_sexo">— No especificado —</option>
+              <option value="hombre" data-i18n="sex_hombre">Hombre</option>
+              <option value="mujer" data-i18n="sex_mujer">Mujer</option>
+              <option value="no_define" data-i18n="sex_no_define">No se define</option>
             </select>
           </div>
           <div class="form-group">
