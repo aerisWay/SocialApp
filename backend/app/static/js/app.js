@@ -27,6 +27,7 @@ const I18N = {
     lbl_ordenar:   'Ordenar:',
     sort_nombre:   'Nombre',
     sort_renov:    'Renovación',
+    sort_alta:     'Alta',
     sort_estado:   'Estado',
     sip_search_placeholder: 'Buscar por SIP…',
     th_nombre:     'Apellidos, Nombre',
@@ -109,6 +110,7 @@ const I18N = {
     lbl_ordenar:   'Ordenar:',
     sort_nombre:   'Nom',
     sort_renov:    'Renovació',
+    sort_alta:     'Alta',
     sort_estado:   'Estat',
     sip_search_placeholder: 'Buscar per SIP…',
     th_nombre:     'Cognoms, Nom',
@@ -394,14 +396,19 @@ function getFilteredSorted() {
   }
 
   list.sort((a, b) => {
-    if (state.sortBy === 'nombre') {
+      if (state.sortBy === 'nombre') {
       const sa = `${a.apellidos || ''} ${a.nombre || ''}`;
       const sb = `${b.apellidos || ''} ${b.nombre || ''}`;
       const cmp = sa.localeCompare(sb, 'es', { sensitivity: 'base' });
       return state.sortDir === 'asc' ? cmp : -cmp;
     }
     let va, vb;
-    if (state.sortBy === 'renovacion') {
+    if (state.sortBy === 'fecha_alta') {
+      if (!a.fecha_alta && !b.fecha_alta) return 0;
+      if (!a.fecha_alta) return 1;
+      if (!b.fecha_alta) return -1;
+      va = a.fecha_alta; vb = b.fecha_alta;
+    } else if (state.sortBy === 'renovacion') {
       if (!a.mes_renovacion && !b.mes_renovacion) return 0;
       if (!a.mes_renovacion) return 1;
       if (!b.mes_renovacion) return -1;
@@ -558,6 +565,7 @@ function abrirModal(caso = null) {
     updateToggleLabel();
   } else {
     g('f-renov').value = new Date().toISOString().slice(0, 7);
+    g('f-alta').value = new Date().toISOString().slice(0, 10);
   }
 
   g('modal-backdrop').classList.remove('hidden');
@@ -641,9 +649,13 @@ async function descargarPDF(tipo = 'activos') {
   btnArrow.disabled = true;
   btn.innerHTML = t('pdf_generating');
 
-  const path = tipo === 'renovacion'
+  let path = tipo === 'renovacion'
     ? '/mayor-a-casa/casos/informe/pdf/renovacion'
     : '/mayor-a-casa/casos/informe/pdf';
+  
+  if (state.filterZona) {
+    path += `?zona=${state.filterZona}`;
+  }
 
   try {
     const res = await fetch(path, {
@@ -713,7 +725,15 @@ document.addEventListener('DOMContentLoaded', () => {
   g('caso-form').addEventListener('submit', onFormSubmit);
   g('modal-close').addEventListener('click', cerrarModal);
   g('modal-cancel').addEventListener('click', cerrarModal);
-  g('f-activo').addEventListener('change', updateToggleLabel);
+  g('f-activo').addEventListener('change', () => {
+    updateToggleLabel();
+    // Automatic discharge date logic
+    if (!g('f-activo').checked) {
+      g('f-baja').value = new Date().toISOString().slice(0, 10);
+    } else {
+      g('f-baja').value = '';
+    }
+  });
 
   g('modal-backdrop').addEventListener('click', e => {
     if (e.target === g('modal-backdrop')) cerrarModal();
@@ -749,7 +769,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
       } else {
         state.sortBy = key;
-        state.sortDir = 'asc';
+        // Default sort direction: descending for dates, ascending for text
+        state.sortDir = (key === 'fecha_alta' || key === 'renovacion') ? 'desc' : 'asc';
       }
       updateSortUI();
       renderTabla();

@@ -231,14 +231,15 @@ def delete_caso(caso_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/casos/informe/pdf", summary="Informe PDF de casos activos")
-def generar_informe_pdf(db: Session = Depends(get_db)):
-    casos = (
-        db.query(CasoMayorACasa)
-        .filter(CasoMayorACasa.activo == True)
-        .order_by(CasoMayorACasa.apellidos)
-        .all()
-    )
-    pdf_bytes = _build_pdf(casos, titulo="Informe de Casos Activos")
+def generar_informe_pdf(zona: int | None = None, db: Session = Depends(get_db)):
+    q = db.query(CasoMayorACasa).filter(CasoMayorACasa.activo == True)
+    titulo = "Informe de Casos Activos"
+    if zona:
+        q = q.filter(CasoMayorACasa.zona == zona)
+        titulo += f" — Zona {zona}"
+    
+    casos = q.order_by(CasoMayorACasa.apellidos).all()
+    pdf_bytes = _build_pdf(casos, titulo=titulo)
     filename = f"informe_major_a_casa_{date.today().isoformat()}.pdf"
     return StreamingResponse(
         BytesIO(pdf_bytes),
@@ -252,16 +253,18 @@ _MESES_ES = ["enero","febrero","marzo","abril","mayo","junio",
 
 
 @router.get("/casos/informe/pdf/renovacion", summary="Informe PDF de renovaciones del mes actual")
-def generar_informe_renovacion_pdf(db: Session = Depends(get_db)):
+def generar_informe_renovacion_pdf(zona: int | None = None, db: Session = Depends(get_db)):
     mes_actual = date.today().strftime("%Y-%m")
     mes_nombre = _MESES_ES[date.today().month - 1].capitalize()
-    casos = (
-        db.query(CasoMayorACasa)
-        .filter(CasoMayorACasa.mes_renovacion == mes_actual)
-        .order_by(CasoMayorACasa.apellidos)
-        .all()
-    )
-    pdf_bytes = _build_pdf(casos, titulo=f"Renovaciones — {mes_nombre} {date.today().year}")
+    
+    q = db.query(CasoMayorACasa).filter(CasoMayorACasa.mes_renovacion == mes_actual)
+    titulo = f"Renovaciones — {mes_nombre} {date.today().year}"
+    if zona:
+        q = q.filter(CasoMayorACasa.zona == zona)
+        titulo += f" — Zona {zona}"
+        
+    casos = q.order_by(CasoMayorACasa.apellidos).all()
+    pdf_bytes = _build_pdf(casos, titulo=titulo)
     filename = f"renovacion_{mes_actual}.pdf"
     return StreamingResponse(
         BytesIO(pdf_bytes),

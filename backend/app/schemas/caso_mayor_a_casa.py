@@ -34,9 +34,14 @@ class CasoCreate(BaseModel):
     observaciones:  Optional[str]  = None
 
     @model_validator(mode='after')
-    def al_menos_dni_o_sip(self):
+    def al_menos_dni_o_sip_y_baja(self):
+        # Al menos uno de estos es obligatorio
         if not self.dni and not self.sip:
             raise ValueError('Debes introducir al menos DNI o SIP')
+        
+        # Si está dado de baja (activo=False), la fecha_baja es obligatoria
+        if not self.activo and not self.fecha_baja:
+            raise ValueError('Si el caso es una BAJA, la fecha de baja es obligatoria')
         return self
 
     @field_validator("dni")
@@ -96,6 +101,13 @@ class CasoUpdate(BaseModel):
     fecha_baja:     Optional[date] = None
     activo:         Optional[bool] = None
     observaciones:  Optional[str]  = None
+
+    @model_validator(mode='after')
+    def validar_baja_update(self):
+        # Si se está intentando desactivar (activo=False), la fecha_baja es obligatoria
+        if self.activo is False and not self.fecha_baja:
+            raise ValueError('Si desactivas el caso, la fecha de baja es obligatoria')
+        return self
 
     @field_validator("dni")
     @classmethod
