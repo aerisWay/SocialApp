@@ -326,7 +326,6 @@ function initApp() {
   }
   g('login-screen').classList.add('hidden');
   g('main-app').classList.remove('hidden');
-  g('dept-name-display').textContent = state.deptName;
   cargarCasos().catch(err => {
     if (err.message.includes('Sesión')) return;
     toast(t('toast_load_err'), 'error');
@@ -653,8 +652,12 @@ async function descargarPDF(tipo = 'activos') {
     ? '/mayor-a-casa/casos/informe/pdf/renovacion'
     : '/mayor-a-casa/casos/informe/pdf';
   
-  if (state.filterZona) {
-    path += `?zona=${state.filterZona}`;
+  const params = new URLSearchParams();
+  if (state.filterZona) params.append('zona', state.filterZona);
+  params.append('lang', state.lang);
+  
+  if (params.toString()) {
+    path += `?${params.toString()}`;
   }
 
   try {

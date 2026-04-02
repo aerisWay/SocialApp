@@ -21,8 +21,43 @@ router = APIRouter(dependencies=[Depends(get_current_dept)])
 STATIC_IMG = Path(__file__).parent.parent / "static" / "img"
 
 
+# ── Localización PDF ───────────────────────────────────────────
+PDF_I18N = {
+    "es": {
+        "activos": "Informe de Casos Activos",
+        "renovacion": "Renovaciones",
+        "generated": "Generado el",
+        "total": "Total",
+        "casos": "casos",
+        "hombres": "Hombres",
+        "mujeres": "Mujeres",
+        "no_def": "No especificado",
+        "headers": ["Apellidos", "Nombre", "DNI", "SIP", "Zona", "Sexo", "Teléfono", "Mes Renov.", "F. Alta", "Dirección"],
+        "footer": "Concejalía de Bienestar Social — Ayto. Benidorm"
+    },
+    "val": {
+        "activos": "Informe de Casos Actius",
+        "renovacion": "Renovacions",
+        "generated": "Generat el",
+        "total": "Total",
+        "casos": "casos",
+        "hombres": "Homes",
+        "mujeres": "Dones",
+        "no_def": "No especificat",
+        "headers": ["Cognoms", "Nom", "DNI", "SIP", "Zona", "Sexe", "Telèfon", "Mes Renov.", "F. Alta", "Adreça"],
+        "footer": "Regidoria de Benestar Social — Ajunt. Benidorm"
+    }
+}
+
+
+_MESES_ES = ["enero","febrero","marzo","abril","mayo","junio",
+             "julio","agosto","septiembre","octubre","noviembre","diciembre"]
+_MESES_VAL = ["gener","febrer","març","abril","maig","juny",
+              "juliol","agost","setembre","octubre","novembre","desembre"]
+
+
 # ── Helper: generar PDF ────────────────────────────────────────
-def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
+def _build_pdf(casos: list, titulo_key: str = "activos", lang: str = "es", extra_titulo: str = "") -> bytes:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -32,6 +67,10 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
         SimpleDocTemplate, Table, TableStyle,
         Paragraph, Spacer, HRFlowable, Image,
     )
+
+    t = PDF_I18N.get(lang, PDF_I18N["es"])
+    titulo_base = t.get(titulo_key, titulo_key)
+    titulo_full = f"Major a Casa — {titulo_base}{extra_titulo}"
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -68,26 +107,23 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
     )
 
     story = [
-        Paragraph(f"Major a Casa — {titulo}", title_st),
+        Paragraph(titulo_full, title_st),
         Paragraph(
-            f"Generado el {date.today().strftime('%d/%m/%Y')} · "
-            f"Total: {len(casos)} caso{'s' if len(casos) != 1 else ''}",
+            f"{t['generated']} {date.today().strftime('%d/%m/%Y')} · "
+            f"{t['total']}: {len(casos)} {t['casos'] if 'casos' in t else 'casos'}",
             sub_st,
         ),
         Paragraph(
-            f"Hombres: <b>{hombres}</b>   ·   Mujeres: <b>{mujeres}</b>"
-            + (f"   ·   No especificado: <b>{no_def}</b>" if no_def > 0 else ""),
+            f"{t['hombres']}: <b>{hombres}</b>   ·   {t['mujeres']}: <b>{mujeres}</b>"
+            + (f"   ·   {t['no_def']}: <b>{no_def}</b>" if no_def > 0 else ""),
             stats_st,
         ),
         HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e1e4e8")),
         Spacer(1, 0.4 * cm),
     ]
 
-    # Cabeceras — now DNI and SIP are separate
-    headers = [
-        "Apellidos", "Nombre", "DNI", "SIP", "Zona", "Sexo",
-        "Teléfono", "Mes Renov.", "F. Alta", "Dirección",
-    ]
+    # Cabeceras locales
+    headers = t["headers"]
     col_widths = [3.5*cm, 2.5*cm, 2.5*cm, 2*cm, 1.3*cm, 1.6*cm, 2.5*cm, 2*cm, 2*cm, None]
 
     def fmt_date(d): return d.strftime("%d/%m/%Y") if d else "—"
@@ -140,7 +176,7 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
         canvas.setFillColor(gris)
         canvas.drawString(
             1.5 * cm, 1.2 * cm,
-            "Concejalía de Bienestar Social — Ayto. Benidorm",
+            t["footer"],
         )
         # Draw logos on the right if they exist
         page_w = landscape(A4)[0]
@@ -231,15 +267,14 @@ def delete_caso(caso_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/casos/informe/pdf", summary="Informe PDF de casos activos")
-def generar_informe_pdf(zona: int | None = None, db: Session = Depends(get_db)):
+def generar_informe_pdf(zona: int | None = None, lang: str = "es", db: Session = Depends(get_db)):
     q = db.query(CasoMayorACasa).filter(CasoMayorACasa.activo == True)
-    titulo = "Informe de Casos Activos"
+    extra = f" — Zona {zona}" if zona else ""
     if zona:
         q = q.filter(CasoMayorACasa.zona == zona)
-        titulo += f" — Zona {zona}"
     
     casos = q.order_by(CasoMayorACasa.apellidos).all()
-    pdf_bytes = _build_pdf(casos, titulo=titulo)
+    pdf_bytes = _build_pdf(casos, titulo_key="activos", lang=lang, extra_titulo=extra)
     filename = f"informe_major_a_casa_{date.today().isoformat()}.pdf"
     return StreamingResponse(
         BytesIO(pdf_bytes),
@@ -253,18 +288,20 @@ _MESES_ES = ["enero","febrero","marzo","abril","mayo","junio",
 
 
 @router.get("/casos/informe/pdf/renovacion", summary="Informe PDF de renovaciones del mes actual")
-def generar_informe_renovacion_pdf(zona: int | None = None, db: Session = Depends(get_db)):
+def generar_informe_renovacion_pdf(zona: int | None = None, lang: str = "es", db: Session = Depends(get_db)):
     mes_actual = date.today().strftime("%Y-%m")
-    mes_nombre = _MESES_ES[date.today().month - 1].capitalize()
+    
+    lista_meses = _MESES_VAL if lang == "val" else _MESES_ES
+    mes_nombre = lista_meses[date.today().month - 1].capitalize()
     
     q = db.query(CasoMayorACasa).filter(CasoMayorACasa.mes_renovacion == mes_actual)
-    titulo = f"Renovaciones — {mes_nombre} {date.today().year}"
+    extra = f" — {mes_nombre} {date.today().year}"
     if zona:
         q = q.filter(CasoMayorACasa.zona == zona)
-        titulo += f" — Zona {zona}"
+        extra += f" — Zona {zona}"
         
     casos = q.order_by(CasoMayorACasa.apellidos).all()
-    pdf_bytes = _build_pdf(casos, titulo=titulo)
+    pdf_bytes = _build_pdf(casos, titulo_key="renovacion", lang=lang, extra_titulo=extra)
     filename = f"renovacion_{mes_actual}.pdf"
     return StreamingResponse(
         BytesIO(pdf_bytes),
