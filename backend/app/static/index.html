@@ -16,9 +16,9 @@
     <div class="login-card">
 
       <div class="login-brand">
-        <div class="login-icon">🤝</div>
+        <img class="login-logo" src="/static/img/MainLogo.png" alt="Concejalía de Bienestar Social" />
         <h1 class="login-title">SocialApp</h1>
-        <p class="login-sub">Acceso para departamentos — Servicios Sociales</p>
+        <p class="login-sub" data-i18n="login_sub">Acceso para APB — Concejalía de Bienestar Social</p>
       </div>
 
       <form id="login-form" class="login-form" novalidate>
@@ -28,13 +28,13 @@
         </div>
 
         <div class="form-group">
-          <label for="login-user">Usuario del departamento</label>
+          <label for="login-user" data-i18n="lbl_usuario">Usuario del departamento</label>
           <input type="text" id="login-user" placeholder="ej: promocion"
             autocomplete="username" spellcheck="false" />
         </div>
 
         <div class="form-group">
-          <label for="login-pass">Contraseña</label>
+          <label for="login-pass" data-i18n="lbl_password">Contraseña</label>
           <div class="pwd-wrap">
             <input type="password" id="login-pass" placeholder="••••••••"
               autocomplete="current-password" />
@@ -44,12 +44,12 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn" data-i18n="btn_login">
           Iniciar sesión
         </button>
       </form>
 
-      <p class="login-footer">La sesión dura 8 horas · Token cifrado JWT</p>
+      <p class="login-footer" data-i18n="login_footer">La sesión dura 8 horas · Token cifrado JWT</p>
     </div>
   </div>
 
@@ -59,7 +59,7 @@
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-brand">
-        <div class="brand-icon">🤝</div>
+        <img class="brand-logo" src="/static/img/MainLogo.png" alt="Logo" />
         <div>
           <span class="brand-name">SocialApp</span>
           <span class="brand-sep">·</span>
@@ -71,8 +71,9 @@
       </nav>
       <div class="topbar-right">
         <div class="topbar-badge">v1.0 · Prototipo</div>
+        <button class="btn-lang" id="btn-lang" title="Cambiar idioma">ES</button>
         <button class="btn-theme" id="btn-theme" title="Cambiar tema claro/oscuro">🌙</button>
-        <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
+        <button class="btn-logout" id="btn-logout" title="Cerrar sesión" data-i18n="btn_logout">
           Cerrar sesión
         </button>
       </div>
@@ -82,7 +83,7 @@
     <nav class="sub-tabs">
       <button class="sub-tab coming-soon" data-tip="Próximamente disponible">📋 PAAD</button>
       <button class="sub-tab coming-soon" data-tip="Próximamente disponible">♿ Dependencia</button>
-      <button class="sub-tab active" id="subtab-mayor">🏠 Mayor a Casa</button>
+      <button class="sub-tab active" id="subtab-mayor">🏠 Major a Casa</button>
       <button class="sub-tab coming-soon" data-tip="Próximamente disponible">🍽️ Menjar a Casa</button>
       <button class="sub-tab coming-soon" data-tip="Próximamente disponible">📞 Teleasistencia</button>
       <button class="sub-tab coming-soon" data-tip="Próximamente disponible">🗺️ Ruta a la Autonomía</button>
@@ -95,36 +96,36 @@
 
         <div class="view-header">
           <div>
-            <h1 class="view-title">Mayor a Casa</h1>
-            <p class="view-desc">Servicio de atención domiciliaria — gestión de casos</p>
+            <h1 class="view-title" data-i18n="view_title">Major a Casa</h1>
+            <p class="view-desc" data-i18n="view_desc">Servici d'atenció domiciliària — gestió de casos</p>
           </div>
           <div class="view-actions">
             <div class="btn-split-group" id="pdf-group">
-              <button class="btn btn-pdf btn-split-main" id="btn-pdf"><span>📊</span> Generar Informe PDF</button>
+              <button class="btn btn-pdf btn-split-main" id="btn-pdf" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
               <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-toggle" title="Seleccionar tipo de informe">▾</button>
               <div class="split-menu hidden" id="pdf-menu">
-                <button class="split-menu-item" data-tipo="activos">📋 Todos los casos activos</button>
-                <button class="split-menu-item" data-tipo="renovacion">📅 Renovación del mes actual</button>
+                <button class="split-menu-item" data-tipo="activos" data-i18n="pdf_activos">📋 Todos los casos activos</button>
+                <button class="split-menu-item" data-tipo="renovacion" data-i18n="pdf_renov">📅 Renovación del mes actual</button>
               </div>
             </div>
-            <button class="btn btn-primary" id="btn-nuevo"><span>✦</span> Nuevo caso</button>
+            <button class="btn btn-primary" id="btn-nuevo" data-i18n="btn_nuevo"><span>✦</span> Nuevo caso</button>
           </div>
         </div>
 
         <div class="stats-row">
-          <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total casos</div></div>
-          <div class="stat-card card-green"><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label">Activos</div></div>
-          <div class="stat-card card-gray"><span class="stat-icon">📁</span><div class="stat-value muted" id="stat-bajas">—</div><div class="stat-label">Dados de baja</div></div>
-          <div class="stat-card card-cyan"><span class="stat-icon">📍</span><div class="stat-value accent" id="stat-zonas">—</div><div class="stat-label">Zonas con casos</div></div>
-          <div class="stat-card card-amber"><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label">Hombres</div></div>
-          <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label">Mujeres</div></div>
+          <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label" data-i18n="stat_total">Total casos</div></div>
+          <div class="stat-card card-green"><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label" data-i18n="stat_activos">Activos</div></div>
+          <div class="stat-card card-gray"><span class="stat-icon">📁</span><div class="stat-value muted" id="stat-bajas">—</div><div class="stat-label" data-i18n="stat_bajas">Dados de baja</div></div>
+          <div class="stat-card card-cyan"><span class="stat-icon">📍</span><div class="stat-value accent" id="stat-zonas">—</div><div class="stat-label" data-i18n="stat_zonas">Zonas con casos</div></div>
+          <div class="stat-card card-amber"><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label" data-i18n="stat_hombres">Hombres</div></div>
+          <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label" data-i18n="stat_mujeres">Mujeres</div></div>
         </div>
 
         <div class="table-toolbar">
           <div class="toolbar-group">
-            <span class="toolbar-label">Zona:</span>
+            <span class="toolbar-label" data-i18n="lbl_zona">Zona:</span>
             <div id="zona-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="filter-btn active" data-zona="">Todas</button>
+              <button class="filter-btn active" data-zona="" data-i18n="zona_todas">Todas</button>
               <button class="filter-btn" data-zona="1">Zona 1</button>
               <button class="filter-btn" data-zona="2">Zona 2</button>
               <button class="filter-btn" data-zona="3">Zona 3</button>
@@ -132,10 +133,16 @@
             </div>
           </div>
           <div class="toolbar-group">
-            <span class="toolbar-label">Ordenar:</span>
-            <button class="sort-btn active" data-sort="nombre">Nombre <span class="sort-dir" id="dir-nombre">↑</span></button>
-            <button class="sort-btn" data-sort="renovacion">Renovación <span class="sort-dir" id="dir-renovacion">↕</span></button>
-            <button class="sort-btn" data-sort="activo">Estado <span class="sort-dir" id="dir-activo">↕</span></button>
+            <div class="sip-search-wrap">
+              <span class="sip-search-icon">🔍</span>
+              <input type="text" id="sip-search" class="sip-search" placeholder="Buscar por SIP…" data-i18n-placeholder="sip_search_placeholder" />
+            </div>
+          </div>
+          <div class="toolbar-group">
+            <span class="toolbar-label" data-i18n="lbl_ordenar">Ordenar:</span>
+            <button class="sort-btn active" data-sort="nombre" data-i18n="sort_nombre">Nombre <span class="sort-dir" id="dir-nombre">↑</span></button>
+            <button class="sort-btn" data-sort="renovacion" data-i18n="sort_renov">Renovación <span class="sort-dir" id="dir-renovacion">↕</span></button>
+            <button class="sort-btn" data-sort="activo" data-i18n="sort_estado">Estado <span class="sort-dir" id="dir-activo">↕</span></button>
             <span class="results-count" id="results-count">0 resultados</span>
           </div>
         </div>
@@ -144,19 +151,20 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Apellidos, Nombre</th>
-                <th>DNI / SIP</th>
-                <th>Zona</th>
-                <th>Sexo</th>
-                <th>Teléfono</th>
-                <th>Mes Renov.</th>
-                <th>Fecha Alta</th>
-                <th>Estado</th>
-                <th class="th-actions">Acciones</th>
+                <th data-i18n="th_nombre">Apellidos, Nombre</th>
+                <th>DNI</th>
+                <th>SIP</th>
+                <th data-i18n="th_zona">Zona</th>
+                <th data-i18n="th_sexo">Sexo</th>
+                <th data-i18n="th_telefono">Teléfono</th>
+                <th data-i18n="th_renov">Mes Renov.</th>
+                <th data-i18n="th_alta">Fecha Alta</th>
+                <th data-i18n="th_estado">Estado</th>
+                <th class="th-actions" data-i18n="th_acciones">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbody-casos">
-              <tr><td colspan="9" class="loading-cell"><div class="spinner"></div><span>Cargando casos…</span></td></tr>
+              <tr><td colspan="10" class="loading-cell"><div class="spinner"></div><span data-i18n="loading">Cargando casos…</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -180,19 +188,24 @@
       <form class="modal-body" id="caso-form" novalidate>
         <div class="form-grid">
           <div class="form-group">
-            <label for="f-apellidos">Apellidos <span class="req">*</span></label>
+            <label for="f-apellidos" data-i18n="lbl_apellidos">Apellidos <span class="req">*</span></label>
             <input type="text" id="f-apellidos" name="apellidos" placeholder="García López" required />
           </div>
           <div class="form-group">
-            <label for="f-nombre">Nombre <span class="req">*</span></label>
+            <label for="f-nombre" data-i18n="lbl_nombre">Nombre <span class="req">*</span></label>
             <input type="text" id="f-nombre" name="nombre" placeholder="María" required />
           </div>
           <div class="form-group">
-            <label for="f-dni">DNI / SIP <span class="req">*</span></label>
-            <input type="text" id="f-dni" name="dni_sip" placeholder="12345678X" required />
+            <label for="f-dni" data-i18n="lbl_dni">DNI</label>
+            <input type="text" id="f-dni" name="dni" placeholder="12345678X" maxlength="9" />
+            <span class="field-hint" id="dni-hint" data-i18n="hint_dni">8 dígitos + 1 letra</span>
           </div>
           <div class="form-group">
-            <label for="f-zona">Zona</label>
+            <label for="f-sip" data-i18n="lbl_sip">SIP <span class="field-hint-inline" data-i18n="hint_sip_inline">(8 dígitos)</span></label>
+            <input type="text" id="f-sip" name="sip" placeholder="12345678" maxlength="8" />
+          </div>
+          <div class="form-group">
+            <label for="f-zona" data-i18n="lbl_zona_field">Zona</label>
             <select id="f-zona" name="zona">
               <option value="">— Sin asignar —</option>
               <option value="1">Zona 1</option>
@@ -202,7 +215,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="f-sexo">Sexo</label>
+            <label for="f-sexo" data-i18n="lbl_sexo">Sexo</label>
             <select id="f-sexo" name="sexo">
               <option value="">— No especificado —</option>
               <option value="hombre">Hombre</option>
@@ -211,27 +224,27 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="f-tel">Teléfono</label>
+            <label for="f-tel" data-i18n="lbl_telefono">Teléfono</label>
             <input type="tel" id="f-tel" name="telefono" placeholder="666 000 000" />
           </div>
           <div class="form-group">
-            <label for="f-renov">Mes de renovación</label>
+            <label for="f-renov" data-i18n="lbl_renov">Mes de renovación</label>
             <input type="month" id="f-renov" name="mes_renovacion" min="2026-01" />
           </div>
           <div class="form-group">
-            <label for="f-alta">Fecha de alta</label>
+            <label for="f-alta" data-i18n="lbl_alta">Fecha de alta</label>
             <input type="date" id="f-alta" name="fecha_alta" />
           </div>
           <div class="form-group">
-            <label for="f-baja">Fecha de baja</label>
+            <label for="f-baja" data-i18n="lbl_baja">Fecha de baja</label>
             <input type="date" id="f-baja" name="fecha_baja" />
           </div>
           <div class="form-group">
-            <label for="f-dir">Dirección</label>
+            <label for="f-dir" data-i18n="lbl_direccion">Dirección</label>
             <input type="text" id="f-dir" name="direccion" placeholder="Calle Mayor, 1, 2º A" />
           </div>
           <div class="form-group form-group-toggle">
-            <label>Estado del caso</label>
+            <label data-i18n="lbl_estado">Estado del caso</label>
             <div class="toggle-row">
               <label class="toggle-switch">
                 <input type="checkbox" id="f-activo" name="activo" checked />
@@ -241,17 +254,17 @@
             </div>
           </div>
           <div class="form-group span-2">
-            <label for="f-obs">Observaciones / Notas</label>
+            <label for="f-obs" data-i18n="lbl_obs">Observaciones / Notas</label>
             <textarea id="f-obs" name="observaciones" rows="3" placeholder="Información adicional…"></textarea>
           </div>
         </div>
       </form>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar">🗑️ Eliminar caso</button>
+        <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar" data-i18n="btn_eliminar">🗑️ Eliminar caso</button>
         <div class="modal-footer-right">
-          <button type="button" class="btn btn-ghost" id="modal-cancel">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="modal-submit" form="caso-form">Guardar</button>
+          <button type="button" class="btn btn-ghost" id="modal-cancel" data-i18n="btn_cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="modal-submit" form="caso-form" data-i18n="btn_guardar">Guardar</button>
         </div>
       </div>
     </div>

@@ -1,9 +1,10 @@
 # ============================================================
-# routers/mayor_a_casa.py — Endpoints del servicio Mayor a Casa
+# routers/mayor_a_casa.py — Endpoints del servicio Major a Casa
 # ============================================================
 
 from io import BytesIO
 from datetime import date
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -15,21 +16,21 @@ from app.models.caso_mayor_a_casa import CasoMayorACasa
 from app.schemas.caso_mayor_a_casa import CasoCreate, CasoUpdate, CasoResponse
 from app.utils.auth import get_current_dept
 
-# dependencies=[Depends(get_current_dept)] protege TODOS los endpoints del router con una sola línea
 router = APIRouter(dependencies=[Depends(get_current_dept)])
+
+STATIC_IMG = Path(__file__).parent.parent / "static" / "img"
 
 
 # ── Helper: generar PDF ────────────────────────────────────────
 def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
-    """Genera un PDF con la lista de casos usando ReportLab."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
     from reportlab.platypus import (
         SimpleDocTemplate, Table, TableStyle,
-        Paragraph, Spacer, HRFlowable,
+        Paragraph, Spacer, HRFlowable, Image,
     )
 
     buffer = BytesIO()
@@ -67,7 +68,7 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
     )
 
     story = [
-        Paragraph(f"Mayor a Casa — {titulo}", title_st),
+        Paragraph(f"Major a Casa — {titulo}", title_st),
         Paragraph(
             f"Generado el {date.today().strftime('%d/%m/%Y')} · "
             f"Total: {len(casos)} caso{'s' if len(casos) != 1 else ''}",
@@ -82,12 +83,12 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
         Spacer(1, 0.4 * cm),
     ]
 
-    # Cabeceras
+    # Cabeceras — now DNI and SIP are separate
     headers = [
-        "Apellidos", "Nombre", "DNI / SIP", "Zona", "Sexo",
+        "Apellidos", "Nombre", "DNI", "SIP", "Zona", "Sexo",
         "Teléfono", "Mes Renov.", "F. Alta", "Dirección",
     ]
-    col_widths = [4*cm, 3*cm, 2.8*cm, 1.5*cm, 1.8*cm, 2.8*cm, 2.2*cm, 2.2*cm, None]
+    col_widths = [3.5*cm, 2.5*cm, 2.5*cm, 2*cm, 1.3*cm, 1.6*cm, 2.5*cm, 2*cm, 2*cm, None]
 
     def fmt_date(d): return d.strftime("%d/%m/%Y") if d else "—"
     def fmt_mes(m):  return m if m else "—"
@@ -95,12 +96,12 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
     def fmt_sexo(s):
         return {"hombre": "Hombre", "mujer": "Mujer", "no_define": "No define"}.get(s or "", "—")
 
-    # Filas de datos
     data = [headers] + [
         [
             Paragraph(c.apellidos, cell_st),
             Paragraph(c.nombre, cell_st),
-            c.dni_sip,
+            c.dni or "—",
+            c.sip or "—",
             fmt_zona(c.zona),
             fmt_sexo(c.sexo),
             c.telefono or "—",
@@ -113,34 +114,55 @@ def _build_pdf(casos: list, titulo: str = "Informe de Casos Activos") -> bytes:
 
     tabla = Table(data, colWidths=col_widths, repeatRows=1)
     tabla.setStyle(TableStyle([
-        # Cabecera
         ("BACKGROUND",   (0, 0), (-1, 0), azul),
         ("TEXTCOLOR",    (0, 0), (-1, 0), colors.white),
         ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE",     (0, 0), (-1, 0), 9),
         ("BOTTOMPADDING",(0, 0), (-1, 0), 8),
         ("TOPPADDING",   (0, 0), (-1, 0), 8),
-        # Filas
         ("FONTSIZE",   (0, 1), (-1, -1), 8),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, claro]),
         ("GRID",       (0, 0), (-1, -1), 0.4, colors.HexColor("#d0d7de")),
         ("VALIGN",     (0, 0), (-1, -1), "MIDDLE"),
         ("PADDING",    (0, 1), (-1, -1), 5),
-        ("ALIGN",      (3, 0), (3, -1), "CENTER"),  # Zona centrada
+        ("ALIGN",      (4, 0), (4, -1), "CENTER"),
     ]))
 
     story.append(tabla)
 
-    # Pie de página con número de página
-    def footer(canvas, doc):
+    # Footer with text left + images right
+    main_logo = STATIC_IMG / "MainLogo.png"
+    second_logo = STATIC_IMG / "SecondLogo.png"
+
+    def footer(canvas, _doc):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(gris)
-        canvas.drawString(1.5 * cm, 1.2 * cm, "SocialApp — Informe Mayor a Casa")
-        canvas.drawRightString(
-            landscape(A4)[0] - 1.5 * cm, 1.2 * cm,
-            f"Página {canvas.getPageNumber()}",
+        canvas.drawString(
+            1.5 * cm, 1.2 * cm,
+            "Concejalía de Bienestar Social — Ayto. Benidorm",
         )
+        # Draw logos on the right if they exist
+        page_w = landscape(A4)[0]
+        x_right = page_w - 1.5 * cm
+        logo_h = 0.8 * cm
+        if second_logo.exists():
+            try:
+                canvas.drawImage(
+                    str(second_logo), x_right - 2.2 * cm, 0.8 * cm,
+                    width=2 * cm, height=logo_h, preserveAspectRatio=True, mask='auto',
+                )
+                x_right -= 2.5 * cm
+            except Exception:
+                pass
+        if main_logo.exists():
+            try:
+                canvas.drawImage(
+                    str(main_logo), x_right - 2.2 * cm, 0.8 * cm,
+                    width=2 * cm, height=logo_h, preserveAspectRatio=True, mask='auto',
+                )
+            except Exception:
+                pass
         canvas.restoreState()
 
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
@@ -155,7 +177,6 @@ def list_casos(
     zona: int | None = None,
     db: Session = Depends(get_db),
 ):
-    """Devuelve todos los casos. Filtros opcionales: solo_activos, zona."""
     q = db.query(CasoMayorACasa)
     if solo_activos:
         q = q.filter(CasoMayorACasa.activo == True)
@@ -174,8 +195,13 @@ def get_caso(caso_id: int, db: Session = Depends(get_db)):
 
 @router.post("/casos/", response_model=CasoResponse, status_code=201, summary="Crear un nuevo caso")
 def create_caso(data: CasoCreate, db: Session = Depends(get_db)):
-    if db.query(CasoMayorACasa).filter(CasoMayorACasa.dni_sip == data.dni_sip).first():
-        raise HTTPException(status_code=400, detail="Ya existe un caso con ese DNI/SIP")
+    # Check uniqueness on DNI and SIP separately
+    if data.dni:
+        if db.query(CasoMayorACasa).filter(CasoMayorACasa.dni == data.dni).first():
+            raise HTTPException(status_code=400, detail="Ya existe un caso con ese DNI")
+    if data.sip:
+        if db.query(CasoMayorACasa).filter(CasoMayorACasa.sip == data.sip).first():
+            raise HTTPException(status_code=400, detail="Ya existe un caso con ese SIP")
     caso = CasoMayorACasa(**data.model_dump())
     db.add(caso)
     db.commit()
@@ -206,7 +232,6 @@ def delete_caso(caso_id: int, db: Session = Depends(get_db)):
 
 @router.get("/casos/informe/pdf", summary="Informe PDF de casos activos")
 def generar_informe_pdf(db: Session = Depends(get_db)):
-    """Genera y descarga un PDF con todos los casos activos, ordenados por apellidos."""
     casos = (
         db.query(CasoMayorACasa)
         .filter(CasoMayorACasa.activo == True)
@@ -214,7 +239,7 @@ def generar_informe_pdf(db: Session = Depends(get_db)):
         .all()
     )
     pdf_bytes = _build_pdf(casos, titulo="Informe de Casos Activos")
-    filename = f"informe_mayor_a_casa_{date.today().isoformat()}.pdf"
+    filename = f"informe_major_a_casa_{date.today().isoformat()}.pdf"
     return StreamingResponse(
         BytesIO(pdf_bytes),
         media_type="application/pdf",
@@ -228,7 +253,6 @@ _MESES_ES = ["enero","febrero","marzo","abril","mayo","junio",
 
 @router.get("/casos/informe/pdf/renovacion", summary="Informe PDF de renovaciones del mes actual")
 def generar_informe_renovacion_pdf(db: Session = Depends(get_db)):
-    """Genera y descarga un PDF con los casos cuya renovación coincide con el mes actual."""
     mes_actual = date.today().strftime("%Y-%m")
     mes_nombre = _MESES_ES[date.today().month - 1].capitalize()
     casos = (

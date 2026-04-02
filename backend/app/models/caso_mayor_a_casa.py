@@ -1,5 +1,5 @@
 # ============================================================
-# models/caso_mayor_a_casa.py — Tabla de casos "Mayor a Casa"
+# models/caso_mayor_a_casa.py — Tabla de casos "Major a Casa"
 # ============================================================
 # Esta tabla almacena las personas atendidas por el servicio.
 # No es lo mismo que la tabla 'users' (que serán los trabajadores
@@ -14,7 +14,7 @@ from app.database import Base
 class CasoMayorACasa(Base):
     """
     Tabla 'casos_mayor_a_casa' en PostgreSQL.
-    Cada fila es una persona atendida por el servicio Mayor a Casa.
+    Cada fila es una persona atendida por el servicio Major a Casa.
     """
 
     __tablename__ = "casos_mayor_a_casa"
@@ -26,8 +26,10 @@ class CasoMayorACasa(Base):
     apellidos = Column(String(100), nullable=False)
     nombre    = Column(String(100), nullable=False)
 
-    # DNI/SIP: identificador clave del caso (único en la tabla)
-    dni_sip   = Column(String(20), unique=True, nullable=False, index=True)
+    # DNI: 8 dígitos + 1 letra. Al menos uno de dni o sip es obligatorio.
+    dni = Column(String(9), nullable=True, index=True)
+    # SIP: 8 dígitos exactos
+    sip = Column(String(8), nullable=True, index=True)
 
     # ── Datos del servicio ────────────────────────────────────
 
@@ -65,4 +67,4 @@ class CasoMayorACasa(Base):
     )
 
     def __repr__(self):
-        return f"<Caso id={self.id} dni_sip={self.dni_sip} nombre={self.apellidos}, {self.nombre}>"
+        return f"<Caso id={self.id} dni={self.dni} sip={self.sip} nombre={self.apellidos}, {self.nombre}>"

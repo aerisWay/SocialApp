@@ -4,39 +4,226 @@
 
 'use strict';
 
+// ── i18n — Traducciones ES / VAL ─────────────────────────────
+
+const I18N = {
+  es: {
+    login_sub:     'Acceso para APB — Concejalía de Bienestar Social',
+    login_footer:  'La sesión dura 8 horas · Token cifrado JWT',
+    lbl_usuario:   'Usuario del departamento',
+    lbl_password:  'Contraseña',
+    btn_login:     'Iniciar sesión',
+    btn_logout:    'Cerrar sesión',
+    view_title:    'Major a Casa',
+    view_desc:     'Servicio de atención domiciliaria — gestión de casos',
+    stat_total:    'Total casos',
+    stat_activos:  'Activos',
+    stat_bajas:    'Dados de baja',
+    stat_zonas:    'Zonas con casos',
+    stat_hombres:  'Hombres',
+    stat_mujeres:  'Mujeres',
+    lbl_zona:      'Zona:',
+    zona_todas:    'Todas',
+    lbl_ordenar:   'Ordenar:',
+    sort_nombre:   'Nombre',
+    sort_renov:    'Renovación',
+    sort_estado:   'Estado',
+    sip_search_placeholder: 'Buscar por SIP…',
+    th_nombre:     'Apellidos, Nombre',
+    th_zona:       'Zona',
+    th_sexo:       'Sexo',
+    th_telefono:   'Teléfono',
+    th_renov:      'Mes Renov.',
+    th_alta:       'Fecha Alta',
+    th_estado:     'Estado',
+    th_acciones:   'Acciones',
+    loading:       'Cargando casos…',
+    btn_pdf:       '<span>📊</span> Generar Informe PDF',
+    pdf_activos:   '📋 Todos los casos activos',
+    pdf_renov:     '📅 Renovación del mes actual',
+    btn_nuevo:     '<span>✦</span> Nuevo caso',
+    lbl_apellidos: 'Apellidos <span class="req">*</span>',
+    lbl_nombre:    'Nombre <span class="req">*</span>',
+    lbl_dni:       'DNI',
+    lbl_sip:       'SIP <span class="field-hint-inline">(8 dígitos)</span>',
+    hint_dni:      '8 dígitos + 1 letra',
+    hint_sip_inline: '(8 dígitos)',
+    lbl_zona_field:'Zona',
+    lbl_sexo:      'Sexo',
+    lbl_telefono:  'Teléfono',
+    lbl_renov:     'Mes de renovación',
+    lbl_alta:      'Fecha de alta',
+    lbl_baja:      'Fecha de baja',
+    lbl_direccion: 'Dirección',
+    lbl_estado:    'Estado del caso',
+    lbl_obs:       'Observaciones / Notas',
+    btn_eliminar:  '🗑️ Eliminar caso',
+    btn_cancelar:  'Cancelar',
+    btn_guardar:   'Guardar',
+    modal_new:     'Nuevo Caso',
+    modal_edit:    'Editar Caso',
+    modal_sub_new: 'Rellena los datos',
+    sex_hombre:    'Hombre',
+    sex_mujer:     'Mujer',
+    sex_no_define: 'No define',
+    badge_activo:  '● Activo',
+    badge_baja:    '○ Baja',
+    empty_no_data: 'No hay casos registrados.',
+    empty_no_filter:'Sin resultados para el filtro aplicado.',
+    toggle_activo: 'Activo',
+    toggle_baja:   'Dado de baja',
+    toast_saved:   'Guardado correctamente',
+    toast_deleted: 'Eliminado',
+    toast_load_err:'Error al cargar datos',
+    toast_pdf_ok:  'PDF descargado',
+    toast_pdf_err: 'Error al generar PDF',
+    confirm_del:   '¿Eliminar caso de',
+    login_empty:   'Introduce usuario y contraseña',
+    login_verify:  'Verificando...',
+    pdf_generating:'<span>⏳</span> Generando...',
+    val_required:  'Campos obligatorios faltantes',
+    val_dni_or_sip:'Debes introducir al menos DNI o SIP',
+    val_dni_bad:   'El DNI debe tener 8 dígitos y 1 letra (ej: 12345678X)',
+    val_sip_bad:   'El SIP debe tener exactamente 8 dígitos',
+    welcome:       'Bienvenido,',
+    opt_no_asignar:'— Sin asignar —',
+    opt_no_sexo:   '— No especificado —',
+  },
+  val: {
+    login_sub:     'Accés per a APB — Regidoria de Benestar Social',
+    login_footer:  'La sessió dura 8 hores · Token xifrat JWT',
+    lbl_usuario:   'Usuari del departament',
+    lbl_password:  'Contrasenya',
+    btn_login:     'Iniciar sessió',
+    btn_logout:    'Tancar sessió',
+    view_title:    'Major a Casa',
+    view_desc:     "Servici d'atenció domiciliària — gestió de casos",
+    stat_total:    'Total casos',
+    stat_activos:  'Actius',
+    stat_bajas:    'Donats de baixa',
+    stat_zonas:    'Zones amb casos',
+    stat_hombres:  'Homes',
+    stat_mujeres:  'Dones',
+    lbl_zona:      'Zona:',
+    zona_todas:    'Totes',
+    lbl_ordenar:   'Ordenar:',
+    sort_nombre:   'Nom',
+    sort_renov:    'Renovació',
+    sort_estado:   'Estat',
+    sip_search_placeholder: 'Buscar per SIP…',
+    th_nombre:     'Cognoms, Nom',
+    th_zona:       'Zona',
+    th_sexo:       'Sexe',
+    th_telefono:   'Telèfon',
+    th_renov:      'Mes Renov.',
+    th_alta:       "Data d'Alta",
+    th_estado:     'Estat',
+    th_acciones:   'Accions',
+    loading:       'Carregant casos…',
+    btn_pdf:       '<span>📊</span> Generar Informe PDF',
+    pdf_activos:   '📋 Tots els casos actius',
+    pdf_renov:     '📅 Renovació del mes actual',
+    btn_nuevo:     '<span>✦</span> Nou cas',
+    lbl_apellidos: 'Cognoms <span class="req">*</span>',
+    lbl_nombre:    'Nom <span class="req">*</span>',
+    lbl_dni:       'DNI',
+    lbl_sip:       'SIP <span class="field-hint-inline">(8 dígits)</span>',
+    hint_dni:      '8 dígits + 1 lletra',
+    hint_sip_inline: '(8 dígits)',
+    lbl_zona_field:'Zona',
+    lbl_sexo:      'Sexe',
+    lbl_telefono:  'Telèfon',
+    lbl_renov:     'Mes de renovació',
+    lbl_alta:      "Data d'alta",
+    lbl_baja:      'Data de baixa',
+    lbl_direccion: 'Adreça',
+    lbl_estado:    'Estat del cas',
+    lbl_obs:       'Observacions / Notes',
+    btn_eliminar:  '🗑️ Eliminar cas',
+    btn_cancelar:  'Cancel·lar',
+    btn_guardar:   'Guardar',
+    modal_new:     'Nou Cas',
+    modal_edit:    'Editar Cas',
+    modal_sub_new: 'Emplena les dades',
+    sex_hombre:    'Home',
+    sex_mujer:     'Dona',
+    sex_no_define: 'No es definix',
+    badge_activo:  '● Actiu',
+    badge_baja:    '○ Baixa',
+    empty_no_data: 'No hi ha casos registrats.',
+    empty_no_filter:'Sense resultats per al filtre aplicat.',
+    toggle_activo: 'Actiu',
+    toggle_baja:   'Donat de baixa',
+    toast_saved:   'Guardat correctament',
+    toast_deleted: 'Eliminat',
+    toast_load_err:'Error en carregar dades',
+    toast_pdf_ok:  'PDF descarregat',
+    toast_pdf_err: 'Error en generar PDF',
+    confirm_del:   'Eliminar cas de',
+    login_empty:   'Introdueix usuari i contrasenya',
+    login_verify:  'Verificant...',
+    pdf_generating:'<span>⏳</span> Generant...',
+    val_required:  'Camps obligatoris que falten',
+    val_dni_or_sip:'Has d\'introduir almenys DNI o SIP',
+    val_dni_bad:   'El DNI ha de tindre 8 dígits i 1 lletra (ex: 12345678X)',
+    val_sip_bad:   'El SIP ha de tindre exactament 8 dígits',
+    welcome:       'Benvingut,',
+    opt_no_asignar:'— Sense assignar —',
+    opt_no_sexo:   '— No especificat —',
+  },
+};
+
+function t(key) { return I18N[state.lang]?.[key] ?? I18N.es[key] ?? key; }
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const text = t(key);
+    if (text !== undefined) el.innerHTML = text;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const text = t(key);
+    if (text !== undefined) el.placeholder = text;
+  });
+  // Update sort buttons — keep arrow icons
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    const key = btn.getAttribute('data-i18n');
+    const dirEl = btn.querySelector('.sort-dir');
+    if (key && dirEl) {
+      const dirHTML = dirEl.outerHTML;
+      btn.innerHTML = t(key) + ' ' + dirHTML;
+    }
+  });
+  // Update lang button label
+  const langBtn = g('btn-lang');
+  if (langBtn) langBtn.textContent = state.lang === 'es' ? 'ES' : 'VAL';
+}
+
 // ── Estado global de la app ───────────────────────────────────
 const state = {
-  casos: [],       // Lista de casos cargados desde la API
-  editingId: null, // null = crear nuevo, número = editar ese ID
+  casos: [],
+  editingId: null,
   token: localStorage.getItem('socialapp_token'),
   deptName: localStorage.getItem('socialapp_dept'),
-  sortBy:  'nombre',   // 'nombre' | 'renovacion' | 'activo'
-  sortDir: 'asc',      // 'asc' | 'desc'
-  filterZona: null,    // null = todas, o 1/2/3/4
+  sortBy:  'nombre',
+  sortDir: 'asc',
+  filterZona: null,
+  sipSearch: '',
+  lang: localStorage.getItem('socialapp_lang') || 'es',
 };
 
 // ── Utilidades ────────────────────────────────────────────────
 
 function g(id) { return document.getElementById(id); }
 
-/** Llama a la API del backend. Incluye el token si existe. */
 async function api(method, path, body = null) {
   const headers = { 'Content-Type': 'application/json' };
-  if (state.token) {
-    headers['Authorization'] = `Bearer ${state.token}`;
-  }
-
+  if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
-
   const res = await fetch(path, opts);
-
-  // Si el servidor dice 401 (No autorizado), cerramos sesión automáticamente
-  if (res.status === 401) {
-    logout();
-    throw new Error('Sesión expirada o no autorizada');
-  }
-
+  if (res.status === 401) { logout(); throw new Error('Sesión expirada'); }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
@@ -61,6 +248,18 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Validación DNI / SIP ─────────────────────────────────────
+
+const RE_DNI = /^\d{8}[A-Za-z]$/;
+const RE_SIP = /^\d{8}$/;
+
+function validarDniSip(dni, sip) {
+  if (!dni && !sip) return t('val_dni_or_sip');
+  if (dni && !RE_DNI.test(dni)) return t('val_dni_bad');
+  if (sip && !RE_SIP.test(sip)) return t('val_sip_bad');
+  return null;
+}
+
 // ── Autenticación ─────────────────────────────────────────────
 
 async function onLoginSubmit(e) {
@@ -72,31 +271,27 @@ async function onLoginSubmit(e) {
 
   if (!user || !pass) {
     errEl.classList.remove('hidden');
-    g('login-error-msg').textContent = 'Introduce usuario y contraseña';
+    g('login-error-msg').textContent = t('login_empty');
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Verificando...';
+  btn.textContent = t('login_verify');
   errEl.classList.add('hidden');
 
   try {
     const data = await api('POST', '/auth/login', { username: user, password: pass });
-    
-    // Guardar sesión
     state.token = data.access_token;
     state.deptName = data.dept_name;
     localStorage.setItem('socialapp_token', data.access_token);
     localStorage.setItem('socialapp_dept', data.dept_name);
-
-    // Mostrar app
     initApp();
-    toast(`Bienvenido, ${state.deptName}`, 'success');
+    toast(`${t('welcome')} ${state.deptName}`, 'success');
   } catch (err) {
     errEl.classList.remove('hidden');
     g('login-error-msg').textContent = err.message;
     btn.disabled = false;
-    btn.textContent = 'Iniciar sesión';
+    btn.textContent = t('btn_login');
   }
 }
 
@@ -105,12 +300,11 @@ function logout() {
   state.deptName = null;
   localStorage.removeItem('socialapp_token');
   localStorage.removeItem('socialapp_dept');
-  
   g('main-app').classList.add('hidden');
   g('login-screen').classList.remove('hidden');
   g('login-form').reset();
   g('login-btn').disabled = false;
-  g('login-btn').textContent = 'Iniciar sesión';
+  g('login-btn').textContent = t('btn_login');
 }
 
 function initApp() {
@@ -119,18 +313,16 @@ function initApp() {
     g('main-app').classList.add('hidden');
     return;
   }
-
   g('login-screen').classList.add('hidden');
   g('main-app').classList.remove('hidden');
   g('dept-name-display').textContent = state.deptName;
-
   cargarCasos().catch(err => {
-    if (err.message.includes('Sesión')) return; // logout() ya se encargó
-    toast('Error al cargar datos', 'error');
+    if (err.message.includes('Sesión')) return;
+    toast(t('toast_load_err'), 'error');
   });
 }
 
-// ── API: operaciones CRUD ─────────────────────────────────────
+// ── API: CRUD ─────────────────────────────────────────────────
 
 async function cargarCasos() {
   state.casos = await api('GET', '/mayor-a-casa/casos/');
@@ -153,15 +345,21 @@ async function eliminarCaso(id) {
   await cargarCasos();
 }
 
-// ── Estadísticas ──────────────────────────────────────────────
+// ── Estadísticas (relativas a zona) ──────────────────────────
 
 function renderStats() {
-  const total   = state.casos.length;
-  const activos = state.casos.filter(c => c.activo).length;
+  // Use filtered list (by zone) for stats
+  let list = [...state.casos];
+  if (state.filterZona !== null) {
+    list = list.filter(c => c.zona === state.filterZona);
+  }
+
+  const total   = list.length;
+  const activos = list.filter(c => c.activo).length;
   const bajas   = total - activos;
-  const zonas   = new Set(state.casos.map(c => c.zona).filter(Boolean)).size;
-  const hombres = state.casos.filter(c => c.sexo === 'hombre').length;
-  const mujeres = state.casos.filter(c => c.sexo === 'mujer').length;
+  const zonas   = new Set(list.map(c => c.zona).filter(Boolean)).size;
+  const hombres = list.filter(c => c.sexo === 'hombre').length;
+  const mujeres = list.filter(c => c.sexo === 'mujer').length;
 
   g('stat-total').textContent   = total;
   g('stat-activos').textContent = activos;
@@ -180,6 +378,12 @@ function getFilteredSorted() {
     list = list.filter(c => c.zona === state.filterZona);
   }
 
+  // SIP search filter
+  if (state.sipSearch) {
+    const q = state.sipSearch;
+    list = list.filter(c => c.sip && c.sip.includes(q));
+  }
+
   list.sort((a, b) => {
     if (state.sortBy === 'nombre') {
       const sa = `${a.apellidos || ''} ${a.nombre || ''}`;
@@ -189,7 +393,6 @@ function getFilteredSorted() {
     }
     let va, vb;
     if (state.sortBy === 'renovacion') {
-      // Nulos al final siempre
       if (!a.mes_renovacion && !b.mes_renovacion) return 0;
       if (!a.mes_renovacion) return 1;
       if (!b.mes_renovacion) return -1;
@@ -213,8 +416,7 @@ function updateSortUI() {
     const isActive = key === state.sortBy;
     btn.classList.toggle('active', isActive);
     if (dirEl) {
-      if (!isActive) { dirEl.textContent = '↕'; }
-      else { dirEl.textContent = state.sortDir === 'asc' ? '↑' : '↓'; }
+      dirEl.textContent = !isActive ? '↕' : (state.sortDir === 'asc' ? '↑' : '↓');
     }
   });
 }
@@ -233,25 +435,30 @@ function renderTabla() {
       : `${list.length} de ${total}`;
   }
 
+  const sexLabels = {
+    hombre: t('sex_hombre'), mujer: t('sex_mujer'), no_define: t('sex_no_define'),
+  };
+
   if (!state.casos.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">No hay casos registrados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_data')}</td></tr>`;
     return;
   }
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">Sin resultados para el filtro aplicado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
-      <td>${esc(c.dni_sip)}</td>
+      <td>${esc(c.dni) || '—'}</td>
+      <td>${esc(c.sip) || '—'}</td>
       <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
-      <td>${({hombre:'Hombre',mujer:'Mujer',no_define:'No define'})[c.sexo] || '—'}</td>
+      <td>${sexLabels[c.sexo] || '—'}</td>
       <td>${esc(c.telefono) || '—'}</td>
       <td>${formatMes(c.mes_renovacion)}</td>
       <td>${formatFecha(c.fecha_alta)}</td>
-      <td><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? '● Activo' : '○ Baja'}</span></td>
+      <td><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? t('badge_activo') : t('badge_baja')}</span></td>
       <td class="td-actions">
         <button class="btn-icon edit-btn" data-id="${c.id}">✏️</button>
         <button class="btn-icon delete-btn" data-id="${c.id}">🗑</button>
@@ -262,14 +469,12 @@ function renderTabla() {
   tbody.querySelectorAll('tr[data-id]').forEach(row => {
     row.addEventListener('click', () => abrirModal(state.casos.find(c => c.id === parseInt(row.dataset.id))));
   });
-
   tbody.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       abrirModal(state.casos.find(c => c.id === parseInt(btn.dataset.id)));
     });
   });
-
   tbody.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -297,19 +502,35 @@ function toggleTheme() {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
+// ── Idioma ────────────────────────────────────────────────────
+
+function toggleLang() {
+  state.lang = state.lang === 'es' ? 'val' : 'es';
+  localStorage.setItem('socialapp_lang', state.lang);
+  applyI18n();
+  renderTabla();
+  renderStats();
+  updateToggleLabel();
+}
+
 // ── Modal ─────────────────────────────────────────────────────
 
 function abrirModal(caso = null) {
   state.editingId = caso ? caso.id : null;
-  g('modal-title').textContent = caso ? 'Editar Caso' : 'Nuevo Caso';
-  g('modal-subtitle').textContent = caso ? `${caso.apellidos}, ${caso.nombre}` : 'Rellena los datos';
+  g('modal-title').textContent = caso ? t('modal_edit') : t('modal_new');
+  g('modal-subtitle').textContent = caso ? `${caso.apellidos}, ${caso.nombre}` : t('modal_sub_new');
   g('btn-eliminar').classList.toggle('hidden', !caso);
   g('caso-form').reset();
+
+  // Clear validation hints
+  const dniHint = g('dni-hint');
+  if (dniHint) { dniHint.textContent = t('hint_dni'); dniHint.classList.remove('error'); }
 
   if (caso) {
     g('f-apellidos').value = caso.apellidos || '';
     g('f-nombre').value = caso.nombre || '';
-    g('f-dni').value = caso.dni_sip || '';
+    g('f-dni').value = caso.dni || '';
+    g('f-sip').value = caso.sip || '';
     g('f-zona').value = caso.zona || '';
     g('f-sexo').value = caso.sexo || '';
     g('f-tel').value = caso.telefono || '';
@@ -326,23 +547,40 @@ function abrirModal(caso = null) {
 
   g('modal-backdrop').classList.remove('hidden');
   g('modal-submit').disabled = false;
-  g('modal-submit').textContent = 'Guardar';
+  g('modal-submit').textContent = t('btn_guardar');
 }
 
 function cerrarModal() { g('modal-backdrop').classList.add('hidden'); state.editingId = null; }
 
 function updateToggleLabel() {
   const checked = g('f-activo').checked;
-  g('toggle-label-text').textContent = checked ? 'Activo' : 'Dado de baja';
+  g('toggle-label-text').textContent = checked ? t('toggle_activo') : t('toggle_baja');
   g('toggle-label-text').style.color = checked ? 'var(--success)' : 'var(--text-3)';
 }
 
 async function onFormSubmit(e) {
   e.preventDefault();
+  const dni = g('f-dni').value.trim();
+  const sip = g('f-sip').value.trim();
+  const apellidos = g('f-apellidos').value.trim();
+  const nombre = g('f-nombre').value.trim();
+
+  if (!apellidos || !nombre) {
+    toast(t('val_required'), 'error');
+    return;
+  }
+
+  const valErr = validarDniSip(dni, sip);
+  if (valErr) {
+    toast(valErr, 'error');
+    return;
+  }
+
   const datos = {
-    apellidos: g('f-apellidos').value.trim(),
-    nombre: g('f-nombre').value.trim(),
-    dni_sip: g('f-dni').value.trim(),
+    apellidos,
+    nombre,
+    dni: dni || null,
+    sip: sip || null,
     zona: g('f-zona').value ? parseInt(g('f-zona').value) : null,
     sexo: g('f-sexo').value || null,
     mes_renovacion: g('f-renov').value || null,
@@ -354,22 +592,17 @@ async function onFormSubmit(e) {
     observaciones: g('f-obs').value.trim() || null,
   };
 
-  if (!datos.apellidos || !datos.nombre || !datos.dni_sip) {
-    toast('Campos obligatorios faltantes', 'error');
-    return;
-  }
-
   try {
     if (state.editingId) await actualizarCaso(state.editingId, datos);
     else await crearCaso(datos);
     cerrarModal();
-    toast('Guardado correctamente', 'success');
+    toast(t('toast_saved'), 'success');
   } catch (err) { toast(err.message, 'error'); }
 }
 
 function pedirConfirmacionEliminar(caso) {
-  if (confirm(`¿Eliminar caso de ${caso.apellidos}?`)) {
-    eliminarCaso(caso.id).then(() => toast('Eliminado', 'info')).catch(err => toast(err.message, 'error'));
+  if (confirm(`${t('confirm_del')} ${caso.apellidos}?`)) {
+    eliminarCaso(caso.id).then(() => toast(t('toast_deleted'), 'info')).catch(err => toast(err.message, 'error'));
   }
 }
 
@@ -378,7 +611,7 @@ async function descargarPDF(tipo = 'activos') {
   const btnArrow = g('btn-pdf-toggle');
   btn.disabled = true;
   btnArrow.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Generando...';
+  btn.innerHTML = t('pdf_generating');
 
   const path = tipo === 'renovacion'
     ? '/mayor-a-casa/casos/informe/pdf/renovacion'
@@ -388,19 +621,19 @@ async function descargarPDF(tipo = 'activos') {
     const res = await fetch(path, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
-    if (!res.ok) throw new Error('Error al generar PDF');
+    if (!res.ok) throw new Error(t('toast_pdf_err'));
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `informe_${new Date().toISOString().slice(0, 10)}.pdf`;
     a.click();
-    toast('PDF descargado', 'success');
+    toast(t('toast_pdf_ok'), 'success');
   } catch (err) { toast(err.message, 'error'); }
   finally {
     btn.disabled = false;
     btnArrow.disabled = false;
-    btn.innerHTML = '<span>📊</span> Generar Informe PDF';
+    btn.innerHTML = t('btn_pdf');
   }
 }
 
@@ -418,11 +651,13 @@ function toast(msg, type = 'info') {
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  applyI18n();
   initApp();
 
   g('login-form').addEventListener('submit', onLoginSubmit);
   g('btn-logout').addEventListener('click', logout);
   g('btn-theme').addEventListener('click', toggleTheme);
+  g('btn-lang').addEventListener('click', toggleLang);
 
   g('toggle-pwd').addEventListener('click', () => {
     const input = g('login-pass');
@@ -461,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (caso) pedirConfirmacionEliminar(caso);
   });
 
-  // Filtros de zona
+  // Zona filters
   g('zona-filters').addEventListener('click', e => {
     const btn = e.target.closest('.filter-btn');
     if (!btn) return;
@@ -469,9 +704,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.classList.add('active');
     state.filterZona = btn.dataset.zona === '' ? null : parseInt(btn.dataset.zona);
     renderTabla();
+    renderStats();
   });
 
-  // Botones de ordenación
+  // SIP search
+  g('sip-search').addEventListener('input', e => {
+    state.sipSearch = e.target.value.trim();
+    renderTabla();
+  });
+
+  // Sort buttons
   document.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.sort;
