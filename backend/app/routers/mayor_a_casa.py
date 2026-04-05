@@ -323,12 +323,19 @@ def list_comisiones(
     if mes:
         q = q.filter(ComisionMayorACasa.mes_comision == mes)
     return q.order_by(ComisionMayorACasa.apellidos).all()
-
-
 @router.post("/comisiones/", response_model=ComisionResponse, status_code=201, summary="Crear comisión")
 def create_comision(data: ComisionCreate, db: Session = Depends(get_db)):
+    # Verificar duplicado
+    if data.dni:
+        exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.dni == data.dni).first()
+        if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este DNI")
+    if data.sip:
+        exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.sip == data.sip).first()
+        if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este SIP")
+
     if not data.mes_comision:
         data.mes_comision = date.today().strftime("%Y-%m")
+    
     comision = ComisionMayorACasa(**data.model_dump())
     db.add(comision)
     db.commit()
@@ -341,8 +348,40 @@ def update_comision(comision_id: int, data: ComisionUpdate, db: Session = Depend
     comision = db.query(ComisionMayorACasa).filter(ComisionMayorACasa.id == comision_id).first()
     if not comision:
         raise HTTPException(status_code=404, detail=f"Comisión {comision_id} no encontrada")
+    
+    prev_estado = comision.estado
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(comision, field, value)
+    
+    # Si pasa a aprobado, crear usuario (Caso)
+    if comision.estado == 'aprobado' and prev_estado != 'aprobado':
+        # Verificar duplicado
+        if comision.dni:
+            exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.dni == comision.dni).first()
+            if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este DNI")
+        if comision.sip:
+            exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.sip == comision.sip).first()
+            if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este SIP")
+
+        caso = CasoMayorACasa(
+            apellidos=comision.apellidos,
+            nombre=comision.nombre,
+            dni=comision.dni,
+            sip=comision.sip,
+            zona=comision.zona,
+            rango_edad=comision.rango_edad,
+            sexo=comision.sexo,
+            mes_renovacion=comision.mes_renovacion,
+            telefono=comision.telefono,
+            direccion=comision.direccion,
+            fecha_alta=date.today(),
+            observaciones=comision.observaciones,
+            activo=True,
+        )
+        db.add(caso)
+        db.flush()
+        comision.caso_id = caso.id
+
     db.commit()
     db.refresh(comision)
     return comision
@@ -365,6 +404,14 @@ def aprobar_comision(comision_id: int, db: Session = Depends(get_db)):
     if comision.estado == 'aprobado' and comision.caso_id:
         raise HTTPException(status_code=400, detail="Esta comisión ya fue aprobada")
 
+    # Verificar duplicado en Usuarios (Casos) antes de crear uno nuevo
+    if comision.dni:
+        exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.dni == comision.dni).first()
+        if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este DNI")
+    if comision.sip:
+        exists = db.query(CasoMayorACasa).filter(CasoMayorACasa.sip == comision.sip).first()
+        if exists: raise HTTPException(status_code=400, detail="Ya existe un usuario con este SIP")
+
     caso = CasoMayorACasa(
         apellidos=comision.apellidos,
         nombre=comision.nombre,
@@ -376,7 +423,7 @@ def aprobar_comision(comision_id: int, db: Session = Depends(get_db)):
         mes_renovacion=comision.mes_renovacion,
         telefono=comision.telefono,
         direccion=comision.direccion,
-        fecha_alta=comision.fecha_alta or date.today(),
+        fecha_alta=date.today(), # Fecha de alta automática hoy
         observaciones=comision.observaciones,
         activo=True,
     )

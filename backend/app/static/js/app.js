@@ -728,11 +728,11 @@ function renderTabla() {
   const sexLabels = { hombre: t('sex_hombre'), mujer: t('sex_mujer'), no_define: t('sex_no_define') };
 
   if (!state.casos.length) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-cell">${t('empty_no_data')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_data')}</td></tr>`;
     return;
   }
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="loading-cell"><div class="spinner"></div></td></tr>`;
     return;
   }
 
@@ -808,11 +808,11 @@ function renderComisiones() {
   const sexLabels = { hombre: t('sex_hombre'), mujer: t('sex_mujer'), no_define: t('sex_no_define') };
 
   if (!state.comisiones.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_data')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_data')}</td></tr>`;
     return;
   }
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
     return;
   }
 
@@ -824,7 +824,6 @@ function renderComisiones() {
       <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
       <td>${rangoEdadLabel(c.rango_edad)}</td>
       <td>${sexLabels[c.sexo] || '—'}</td>
-      <td>${formatFecha(c.fecha_alta)}</td>
       <td>${formatMes(c.mes_comision)}</td>
       <td>${estadoBadge(c.estado)}</td>
       <td class="td-actions">
@@ -1034,6 +1033,9 @@ function abrirModal(item = null, mode = 'usuario') {
     ? `${item.apellidos}, ${item.nombre}`
     : t('modal_sub_new');
 
+  g('f-mes-com-row').classList.toggle('hidden', !esComision);
+  g('f-alta-row').classList.toggle('hidden', esComision);
+  g('f-baja-row').classList.toggle('hidden', esComision);
   g('btn-eliminar').classList.toggle('hidden', !item);
   g('btn-aprobar').classList.toggle('hidden',
     !(esComision && item && item.estado !== 'aprobado'));
@@ -1041,6 +1043,9 @@ function abrirModal(item = null, mode = 'usuario') {
   // Show/hide mode-specific sections
   g('activo-group').style.display         = esComision ? 'none' : '';
   g('comision-estado-group').style.display = esComision ? '' : 'none';
+  g('f-mes-com-row').style.display        = esComision ? '' : 'none';
+  g('f-alta-row').style.display           = esComision ? 'none' : '';
+  g('f-baja-row').style.display           = esComision ? 'none' : '';
 
   g('caso-form').reset();
 
@@ -1067,6 +1072,7 @@ function abrirModal(item = null, mode = 'usuario') {
     g('f-obs').value         = item.observaciones || '';
     if (esComision) {
       g('f-estado-comision').value = item.estado || 'en_tramite';
+      g('f-mes-com').value = item.mes_comision || '';
     } else {
       g('f-activo').checked = item.activo !== false;
       updateToggleLabel();
@@ -1076,6 +1082,7 @@ function abrirModal(item = null, mode = 'usuario') {
     g('f-alta').value  = new Date().toISOString().slice(0, 10);
     if (esComision) {
       g('f-estado-comision').value = 'en_tramite';
+      g('f-mes-com').value = new Date().toISOString().slice(0, 7);
     } else {
       updateToggleLabel();
     }
@@ -1138,17 +1145,30 @@ async function onFormSubmit(e) {
     sexo:           g('f-sexo').value   || null,
     mes_renovacion: g('f-renov').value  || null,
     telefono:       g('f-tel').value.trim() || null,
-    fecha_alta:     g('f-alta').value   || null,
-    fecha_baja:     g('f-baja').value   || null,
     direccion:      g('f-dir').value.trim() || null,
     observaciones:  g('f-obs').value.trim() || null,
   };
+  if (!esComision) {
+    baseData.fecha_alta = g('f-alta').value || null;
+    baseData.fecha_baja = g('f-baja').value || null;
+  } else {
+    baseData.mes_comision = g('f-mes-com').value || null;
+  }
 
   g('modal-submit').disabled = true;
 
   try {
     if (esComision) {
-      const datos = { ...baseData, estado: g('f-estado-comision').value };
+      const newStatus = g('f-estado-comision').value;
+      const prevStatus = state.editingComisionId ? state.comisiones.find(c => c.id === state.editingComisionId)?.estado : null;
+      
+      if (newStatus === 'aprobado' && prevStatus !== 'aprobado') {
+        if (!confirm(t('confirm_aprobar') + ' ' + apellidos + ', ' + nombre + '?')) {
+          g('modal-submit').disabled = false;
+          return;
+        }
+      }
+      const datos = { ...baseData, estado: newStatus };
       if (state.editingComisionId) await actualizarComision(state.editingComisionId, datos);
       else                          await crearComision(datos);
     } else {

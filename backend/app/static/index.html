@@ -395,11 +395,11 @@
             <label for="f-renov" data-i18n="lbl_renov">Mes de renovación</label>
             <input type="month" id="f-renov" name="mes_renovacion" min="2026-01" />
           </div>
-          <div class="form-group">
+          <div class="form-group" id="f-alta-row">
             <label for="f-alta" data-i18n="lbl_alta">Fecha de alta</label>
             <input type="date" id="f-alta" name="fecha_alta" />
           </div>
-          <div class="form-group">
+          <div class="form-group" id="f-baja-row">
             <label for="f-baja" data-i18n="lbl_baja">Fecha de baja</label>
             <input type="date" id="f-baja" name="fecha_baja" />
           </div>
@@ -420,7 +420,12 @@
             </div>
           </div>
 
-          <!-- Solo para comisiones: estado tramite/aprobado/denegado -->
+          <!-- Solo para comisiones: mes comisión -->
+          <div class="form-group" id="f-mes-com-row" style="display:none">
+            <label for="f-mes-com" data-i18n="lbl_mes">Mes:</label>
+            <input type="month" id="f-mes-com" name="mes_comision" />
+          </div>
+
           <div class="form-group" id="comision-estado-group" style="display:none">
             <label for="f-estado-comision" data-i18n="lbl_estado_comision">Estado de la comisión</label>
             <select id="f-estado-comision" name="estado">

@@ -25,8 +25,6 @@ class ComisionCreate(BaseModel):
     mes_renovacion: Optional[str] = None
     telefono:       Optional[str] = None
     direccion:      Optional[str] = None
-    fecha_alta:     Optional[date] = None
-    fecha_baja:     Optional[date] = None
     estado:         str = 'en_tramite'
     mes_comision:   Optional[str] = None
     observaciones:  Optional[str] = None
@@ -81,8 +79,6 @@ class ComisionUpdate(BaseModel):
     mes_renovacion: Optional[str]  = None
     telefono:       Optional[str]  = None
     direccion:      Optional[str]  = None
-    fecha_alta:     Optional[date] = None
-    fecha_baja:     Optional[date] = None
     estado:         Optional[str]  = None
     mes_comision:   Optional[str]  = None
     observaciones:  Optional[str]  = None
@@ -125,8 +121,6 @@ class ComisionResponse(BaseModel):
     mes_renovacion: Optional[str]
     telefono:       Optional[str]
     direccion:      Optional[str]
-    fecha_alta:     Optional[date]
-    fecha_baja:     Optional[date]
     estado:         str
     mes_comision:   Optional[str]
     observaciones:  Optional[str]
