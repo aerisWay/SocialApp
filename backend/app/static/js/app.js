@@ -738,17 +738,17 @@ function renderTabla() {
 
   tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
-      <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
-      <td class="td-center">${esc(c.dni) || '—'}</td>
-      <td class="td-center">${state.sipSearch ? highlightSIP(c.sip, state.sipSearch) : (esc(c.sip) || '—')}</td>
-      <td class="td-center">${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
-      <td class="td-center">${rangoEdadLabel(c.rango_edad)}</td>
-      <td class="td-center">${sexLabels[c.sexo] || '—'}</td>
-      <td class="td-center">${esc(c.telefono) || '—'}</td>
-      <td class="td-center">${formatMes(c.mes_renovacion)}</td>
-      <td class="td-center">${formatFecha(c.fecha_alta)}</td>
-      <td class="td-center"><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? t('badge_activo') : t('badge_baja')}</span></td>
-      <td class="td-actions td-center">
+      <td class="td-name" style="text-align: left;"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
+      <td style="text-align: left;">${esc(c.dni) || '—'}</td>
+      <td style="text-align: left;">${state.sipSearch ? highlightSIP(c.sip, state.sipSearch) : (esc(c.sip) || '—')}</td>
+      <td style="text-align: left;">${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
+      <td style="text-align: left;">${rangoEdadLabel(c.rango_edad)}</td>
+      <td style="text-align: left;">${sexLabels[c.sexo] || '—'}</td>
+      <td style="text-align: left;">${esc(c.telefono) || '—'}</td>
+      <td style="text-align: left;">${formatMes(c.mes_renovacion)}</td>
+      <td style="text-align: left;">${formatFecha(c.fecha_alta)}</td>
+      <td style="text-align: left;"><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? t('badge_activo') : t('badge_baja')}</span></td>
+      <td class="td-actions" style="text-align: left;">
         <button class="btn-icon edit-btn" data-id="${c.id}" title="Editar">✏️</button>
         <button class="btn-icon delete-btn" data-id="${c.id}" title="Eliminar">🗑</button>
       </td>
@@ -819,14 +819,14 @@ function renderComisiones() {
   tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
-      <td class="td-center">${esc(c.dni) || '—'}</td>
-      <td class="td-center">${state.sipSearchComision ? highlightSIP(c.sip, state.sipSearchComision) : (esc(c.sip) || '—')}</td>
-      <td class="td-center">${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
-      <td class="td-center">${rangoEdadLabel(c.rango_edad)}</td>
-      <td class="td-center">${sexLabels[c.sexo] || '—'}</td>
-      <td class="td-center">${formatMes(c.mes_comision)}</td>
-      <td class="td-center">${estadoBadge(c.estado)}</td>
-      <td class="td-actions td-center">
+      <td>${esc(c.dni) || '—'}</td>
+      <td>${state.sipSearchComision ? highlightSIP(c.sip, state.sipSearchComision) : (esc(c.sip) || '—')}</td>
+      <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
+      <td>${rangoEdadLabel(c.rango_edad)}</td>
+      <td>${sexLabels[c.sexo] || '—'}</td>
+      <td>${formatMes(c.mes_comision)}</td>
+      <td>${estadoBadge(c.estado)}</td>
+      <td class="td-actions">
         <button class="btn-icon edit-btn-c" data-id="${c.id}" title="Editar">✏️</button>
         <button class="btn-icon delete-btn-c" data-id="${c.id}" title="Eliminar">🗑</button>
       </td>
