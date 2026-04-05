@@ -208,6 +208,16 @@
         <!-- ════════════════ PESTAÑA FACTURAS ════════════════ -->
         <div id="itab-facturas" class="inner-tab-panel hidden">
 
+          <div class="itab-actions">
+            <div class="btn-split-group" id="pdf-group-facturas">
+              <button class="btn btn-pdf btn-split-main" id="btn-pdf-facturas" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
+              <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-facturas-toggle" title="Seleccionar tipo de informe">▾</button>
+              <div class="split-menu hidden" id="pdf-menu-facturas">
+                <button class="split-menu-item" data-tipo="facturas" data-i18n="pdf_fact_anual">📋 Facturación del año seleccionado</button>
+              </div>
+            </div>
+          </div>
+
           <div class="facturas-header">
             <h3 class="facturas-title" data-i18n="facturas_title">Facturas anuales</h3>
             <div class="facturas-year-wrap">
@@ -244,6 +254,13 @@
         <div id="itab-comisiones" class="inner-tab-panel hidden">
 
           <div class="itab-actions">
+            <div class="btn-split-group" id="pdf-group-comisiones">
+              <button class="btn btn-pdf btn-split-main" id="btn-pdf-comisiones" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
+              <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-comisiones-toggle" title="Seleccionar tipo de informe">▾</button>
+              <div class="split-menu hidden" id="pdf-menu-comisiones">
+                <button class="split-menu-item" data-tipo="tramite" data-i18n="pdf_com_tramite">📋 Comisiones en trámite</button>
+              </div>
+            </div>
             <button class="btn btn-primary" id="btn-nuevo-comision" data-i18n="btn_nuevo_comision">
               <span>✦</span> Nueva comisión
             </button>
@@ -327,6 +344,18 @@
 
         <!-- ════════════════ PESTAÑA SEGUIMIENTO ════════════════ -->
         <div id="itab-seguimiento" class="inner-tab-panel hidden">
+
+          <div class="itab-actions">
+            <div class="btn-split-group" id="pdf-group-seguimiento">
+              <button class="btn btn-pdf btn-split-main" id="btn-pdf-seguimiento" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
+              <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-seguimiento-toggle" title="Seleccionar tipo de informe">▾</button>
+              <div class="split-menu hidden" id="pdf-menu-seguimiento">
+                <button class="split-menu-item" data-tipo="entrevista" data-i18n="seg_entrevistas">🗣 Entrevistas</button>
+                <button class="split-menu-item" data-tipo="visita"     data-i18n="seg_visitas">🚪 Visitas</button>
+                <button class="split-menu-item" data-tipo="informe"    data-i18n="seg_informes">📄 Informes</button>
+              </div>
+            </div>
+          </div>
 
           <div class="facturas-header">
             <h3 class="facturas-title" data-i18n="seg_title">Seguimiento anual</h3>

@@ -170,7 +170,18 @@ def _build_pdf(casos: list, titulo_key: str = "activos", lang: str = "es", extra
     ]))
     story.append(tabla)
 
-    # ── Footer: texto izquierda + logos derecha ────────────────
+    footer = _make_footer(lang)
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    return buffer.getvalue()
+
+
+# ── Helper: pie de página compartido ─────────────────────────
+def _make_footer(lang: str = "es"):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.units import cm
+    t = PDF_I18N.get(lang, PDF_I18N["es"])
+    gris = colors.HexColor("#6e7681")
     main_logo   = STATIC_IMG / "MainLogo.png"
     second_logo = STATIC_IMG / "SecondLogo.png"
 
@@ -179,35 +190,331 @@ def _build_pdf(casos: list, titulo_key: str = "activos", lang: str = "es", extra
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(gris)
         canvas.drawString(1.5 * cm, 1.0 * cm, t["footer"])
-
-        page_w  = landscape(A4)[0]
+        page_w  = canvas._pagesize[0]
         x_right = page_w - 1.5 * cm
-
-        # SecondLogo — al doble del tamaño anterior (antes: 4cm ancho)
         if second_logo.exists():
             try:
-                canvas.drawImage(
-                    str(second_logo), x_right - 8.5 * cm, 0.3 * cm,
-                    width=8 * cm, height=3.2 * cm,
-                    preserveAspectRatio=True, mask='auto',
-                )
+                canvas.drawImage(str(second_logo), x_right - 8.5 * cm, 0.3 * cm,
+                                 width=8 * cm, height=3.2 * cm,
+                                 preserveAspectRatio=True, mask='auto')
                 x_right -= 8.8 * cm
             except Exception:
                 pass
-
-        # MainLogo — a la mitad del tamaño anterior (antes: 1cm ancho)
         if main_logo.exists():
             try:
-                canvas.drawImage(
-                    str(main_logo), x_right - 0.6 * cm, 0.8 * cm,
-                    width=0.5 * cm, height=0.2 * cm,
-                    preserveAspectRatio=True, mask='auto',
-                )
+                canvas.drawImage(str(main_logo), x_right - 0.6 * cm, 0.8 * cm,
+                                 width=0.5 * cm, height=0.2 * cm,
+                                 preserveAspectRatio=True, mask='auto')
             except Exception:
                 pass
-
         canvas.restoreState()
+    return footer
 
+
+# ── Helper: PDF Facturas ──────────────────────────────────────
+def _build_pdf_facturas(facturas: list, anio: int, lang: str = "es") -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+
+    t  = PDF_I18N.get(lang, PDF_I18N["es"])
+    meses = _MESES_VAL if lang == "val" else _MESES_ES
+    azul  = colors.HexColor("#1f6feb")
+    gris  = colors.HexColor("#6e7681")
+    claro = colors.HexColor("#f6f8fa")
+    verde = colors.HexColor("#0d6e3f")
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=2*cm, leftMargin=2*cm,
+                            topMargin=2.2*cm, bottomMargin=2.5*cm)
+    styles = getSampleStyleSheet()
+    title_st = ParagraphStyle("t", parent=styles["Heading1"],
+                              fontSize=18, textColor=azul, spaceAfter=4, alignment=TA_CENTER)
+    sub_st   = ParagraphStyle("s", parent=styles["Normal"],
+                              fontSize=10, textColor=gris, spaceAfter=16, alignment=TA_CENTER)
+    num_st   = ParagraphStyle("n", parent=styles["Normal"],
+                              fontSize=9, alignment=TA_RIGHT)
+
+    # Build lookup: mes → factura
+    by_mes = {f.mes: f for f in facturas}
+    total_casos   = sum(f.num_casos   or 0 for f in facturas)
+    total_cuantia = sum(float(f.cuantia or 0) for f in facturas)
+
+    story = [
+        Paragraph(f"Major a Casa — Facturación {anio}", title_st),
+        Paragraph(f"{t['generated']} {date.today().strftime('%d/%m/%Y')}", sub_st),
+        Paragraph(
+            f"Total casos: <b>{total_casos}</b>   ·   Total cuantía: <b>{total_cuantia:,.2f} €</b>",
+            ParagraphStyle("st", parent=styles["Normal"], fontSize=9, textColor=azul,
+                           spaceAfter=10, alignment=TA_CENTER)
+        ),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e1e4e8")),
+        Spacer(1, 0.4*cm),
+    ]
+
+    headers = ["Mes", "Nº Casos", "% Casos", "Cuantía (€)", "% Cuantía"]
+    data = [headers]
+    for i, mes_nom in enumerate(meses):
+        mes = i + 1
+        f = by_mes.get(mes)
+        casos   = f.num_casos   if f and f.num_casos   is not None else 0
+        cuantia = float(f.cuantia or 0) if f else 0
+        pct_c  = f"{(casos   / total_casos   * 100):.1f}%" if total_casos   else "—"
+        pct_q  = f"{(cuantia / total_cuantia * 100):.1f}%" if total_cuantia else "—"
+        data.append([
+            mes_nom.capitalize(),
+            Paragraph(str(casos)           if casos   else "—", num_st),
+            Paragraph(pct_c,                                     num_st),
+            Paragraph(f"{cuantia:,.2f} €" if cuantia else "—",  num_st),
+            Paragraph(pct_q,                                     num_st),
+        ])
+    # Totals row
+    data.append([
+        "TOTAL",
+        Paragraph(f"<b>{total_casos}</b>",           num_st),
+        Paragraph("<b>100%</b>" if total_casos else "—", num_st),
+        Paragraph(f"<b>{total_cuantia:,.2f} €</b>", num_st),
+        Paragraph("<b>100%</b>" if total_cuantia else "—", num_st),
+    ])
+
+    col_w = [4*cm, 3*cm, 3*cm, 4.5*cm, 3*cm]
+    tabla = Table(data, colWidths=col_w, repeatRows=1)
+    n_rows = len(data)
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, 0), azul),
+        ("TEXTCOLOR",     (0, 0), (-1, 0), colors.white),
+        ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE",      (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING",    (0, 0), (-1, 0), 8),
+        ("FONTSIZE",      (0, 1), (-1, -1), 8),
+        ("ROWBACKGROUNDS",(0, 1), (-1, n_rows-2), [colors.white, claro]),
+        ("BACKGROUND",    (0, n_rows-1), (-1, n_rows-1), colors.HexColor("#e8f5e9")),
+        ("TEXTCOLOR",     (0, n_rows-1), (-1, n_rows-1), verde),
+        ("FONTNAME",      (0, n_rows-1), (-1, n_rows-1), "Helvetica-Bold"),
+        ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#d0d7de")),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN",         (0, 0), (0, -1), "LEFT"),
+        ("PADDING",       (0, 1), (-1, -1), 5),
+    ]))
+    story.append(tabla)
+
+    footer = _make_footer(lang)
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    return buffer.getvalue()
+
+
+# ── Helper: PDF Comisiones ────────────────────────────────────
+def _build_pdf_comisiones(comisiones: list, lang: str = "es",
+                           zona: Optional[int] = None, mes: Optional[str] = None) -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+
+    t     = PDF_I18N.get(lang, PDF_I18N["es"])
+    azul  = colors.HexColor("#1f6feb")
+    gris  = colors.HexColor("#6e7681")
+    claro = colors.HexColor("#f6f8fa")
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                            rightMargin=1.5*cm, leftMargin=1.5*cm,
+                            topMargin=2.2*cm,   bottomMargin=2.5*cm)
+    styles = getSampleStyleSheet()
+    title_st = ParagraphStyle("t", parent=styles["Heading1"],
+                              fontSize=18, textColor=azul, spaceAfter=4, alignment=TA_CENTER)
+    sub_st   = ParagraphStyle("s", parent=styles["Normal"],
+                              fontSize=10, textColor=gris, spaceAfter=8, alignment=TA_CENTER)
+    cell_st  = ParagraphStyle("c", parent=styles["Normal"], fontSize=8)
+
+    filtros = []
+    if zona: filtros.append(f"Zona {zona}")
+    if mes:  filtros.append(f"Mes: {mes}")
+    filtro_txt = " · ".join(filtros) if filtros else ("Todas las zonas" if lang == "es" else "Totes les zones")
+
+    hombres = sum(1 for c in comisiones if c.sexo == "hombre")
+    mujeres = sum(1 for c in comisiones if c.sexo == "mujer")
+
+    story = [
+        Paragraph("Major a Casa — Comisiones en Trámite", title_st),
+        Paragraph(f"{t['generated']} {date.today().strftime('%d/%m/%Y')} · Filtro: {filtro_txt}", sub_st),
+        Paragraph(
+            f"Total: <b>{len(comisiones)}</b>   ·   "
+            f"{'Hombres' if lang=='es' else 'Homes'}: <b>{hombres}</b>   ·   "
+            f"{'Mujeres' if lang=='es' else 'Dones'}: <b>{mujeres}</b>",
+            ParagraphStyle("st", parent=styles["Normal"], fontSize=9, textColor=azul,
+                           spaceAfter=10, alignment=TA_CENTER)
+        ),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e1e4e8")),
+        Spacer(1, 0.4*cm),
+    ]
+
+    headers = (["Apellidos", "Nombre", "DNI", "SIP", "Zona", "Edad", "Sexo", "Mes Com.", "Estado"]
+               if lang == "es" else
+               ["Cognoms", "Nom", "DNI", "SIP", "Zona", "Edat", "Sexe", "Mes Com.", "Estat"])
+
+    estado_labels = {"en_tramite": "En trámite", "aprobado": "Aprobado", "denegado": "Denegado"}
+    if lang == "val":
+        estado_labels = {"en_tramite": "En tràmit", "aprobado": "Aprovat", "denegado": "Denegat"}
+
+    def fmt_edad(e): return t.get(e, "—") if e else "—"
+    def fmt_sexo(s):
+        m = {"hombre": "Hombre", "mujer": "Mujer", "no_define": "N/D"} if lang == "es" \
+            else {"hombre": "Home",  "mujer": "Dona",  "no_define": "N/D"}
+        return m.get(s or "", "—")
+
+    data = [headers] + [
+        [
+            Paragraph(c.apellidos or "—", cell_st),
+            Paragraph(c.nombre    or "—", cell_st),
+            c.dni or "—",
+            c.sip or "—",
+            f"Zona {c.zona}" if c.zona else "—",
+            fmt_edad(c.rango_edad),
+            fmt_sexo(c.sexo),
+            c.mes_comision or "—",
+            estado_labels.get(c.estado, c.estado or "—"),
+        ]
+        for c in comisiones
+    ]
+
+    col_w = [3.2*cm, 2.4*cm, 2.2*cm, 2*cm, 1.4*cm, 1.4*cm, 1.6*cm, 2.2*cm, None]
+    tabla = Table(data, colWidths=col_w, repeatRows=1)
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, 0), azul),
+        ("TEXTCOLOR",     (0, 0), (-1, 0), colors.white),
+        ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE",      (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING",    (0, 0), (-1, 0), 8),
+        ("FONTSIZE",      (0, 1), (-1, -1), 8),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -1), [colors.white, claro]),
+        ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#d0d7de")),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("PADDING",       (0, 1), (-1, -1), 5),
+    ]))
+    story.append(tabla)
+
+    footer = _make_footer(lang)
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    return buffer.getvalue()
+
+
+# ── Helper: PDF Seguimiento ───────────────────────────────────
+def _build_pdf_seguimiento(rows: list, tipo: str, anio: int, lang: str = "es") -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+
+    t     = PDF_I18N.get(lang, PDF_I18N["es"])
+    meses = _MESES_VAL if lang == "val" else _MESES_ES
+    azul  = colors.HexColor("#1f6feb")
+    gris  = colors.HexColor("#6e7681")
+    claro = colors.HexColor("#f6f8fa")
+    verde = colors.HexColor("#0d6e3f")
+
+    tipo_labels = {
+        "entrevista": ("Entrevistas" if lang == "es" else "Entrevistes"),
+        "visita":     ("Visitas"     if lang == "es" else "Visites"),
+        "informe":    ("Informes"    if lang == "es" else "Informes"),
+    }
+    tipo_label = tipo_labels.get(tipo, tipo.capitalize())
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=2*cm, leftMargin=2*cm,
+                            topMargin=2.2*cm, bottomMargin=2.5*cm)
+    styles = getSampleStyleSheet()
+    title_st = ParagraphStyle("t", parent=styles["Heading1"],
+                              fontSize=18, textColor=azul, spaceAfter=4, alignment=TA_CENTER)
+    sub_st   = ParagraphStyle("s", parent=styles["Normal"],
+                              fontSize=10, textColor=gris, spaceAfter=16, alignment=TA_CENTER)
+    num_st   = ParagraphStyle("n", parent=styles["Normal"], fontSize=9, alignment=TA_RIGHT)
+
+    by_mes    = {r.mes: r for r in rows}
+    total_c   = sum(r.cantidad or 0 for r in rows)
+    total_h   = sum(r.hombres  or 0 for r in rows)
+    total_m   = sum(r.mujeres  or 0 for r in rows)
+
+    story = [
+        Paragraph(f"Major a Casa — Seguimiento: {tipo_label} {anio}", title_st),
+        Paragraph(f"{t['generated']} {date.today().strftime('%d/%m/%Y')}", sub_st),
+        Paragraph(
+            f"Total: <b>{total_c}</b>   ·   "
+            f"{'Hombres' if lang=='es' else 'Homes'}: <b>{total_h}</b>   ·   "
+            f"{'Mujeres' if lang=='es' else 'Dones'}: <b>{total_m}</b>",
+            ParagraphStyle("st", parent=styles["Normal"], fontSize=9, textColor=azul,
+                           spaceAfter=10, alignment=TA_CENTER)
+        ),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e1e4e8")),
+        Spacer(1, 0.4*cm),
+    ]
+
+    col_h = ["Mes", "Cantidad", "Hombres", "% Hombres", "Mujeres", "% Mujeres"] if lang == "es" \
+            else ["Mes", "Quantitat", "Homes", "% Homes", "Dones", "% Dones"]
+
+    data = [col_h]
+    for i, mes_nom in enumerate(meses):
+        mes = i + 1
+        r   = by_mes.get(mes)
+        c   = r.cantidad or 0 if r else 0
+        h   = r.hombres  or 0 if r else 0
+        m   = r.mujeres  or 0 if r else 0
+        pct_h = f"{(h/c*100):.1f}%" if c else "—"
+        pct_m = f"{(m/c*100):.1f}%" if c else "—"
+        data.append([
+            mes_nom.capitalize(),
+            Paragraph(str(c) if c else "—", num_st),
+            Paragraph(str(h) if h else "—", num_st),
+            Paragraph(pct_h,                num_st),
+            Paragraph(str(m) if m else "—", num_st),
+            Paragraph(pct_m,                num_st),
+        ])
+    # Totals
+    pct_ht = f"{(total_h/total_c*100):.1f}%" if total_c else "—"
+    pct_mt = f"{(total_m/total_c*100):.1f}%" if total_c else "—"
+    data.append([
+        "TOTAL",
+        Paragraph(f"<b>{total_c}</b>", num_st),
+        Paragraph(f"<b>{total_h}</b>", num_st),
+        Paragraph(f"<b>{pct_ht}</b>",  num_st),
+        Paragraph(f"<b>{total_m}</b>", num_st),
+        Paragraph(f"<b>{pct_mt}</b>",  num_st),
+    ])
+
+    col_w = [4*cm, 3*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.8*cm]
+    n     = len(data)
+    tabla = Table(data, colWidths=col_w, repeatRows=1)
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, 0), azul),
+        ("TEXTCOLOR",     (0, 0), (-1, 0), colors.white),
+        ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE",      (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING",    (0, 0), (-1, 0), 8),
+        ("FONTSIZE",      (0, 1), (-1, -1), 8),
+        ("ROWBACKGROUNDS",(0, 1), (-1, n-2), [colors.white, claro]),
+        ("BACKGROUND",    (0, n-1), (-1, n-1), colors.HexColor("#e8f5e9")),
+        ("TEXTCOLOR",     (0, n-1), (-1, n-1), verde),
+        ("FONTNAME",      (0, n-1), (-1, n-1), "Helvetica-Bold"),
+        ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#d0d7de")),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN",         (0, 0), (0, -1), "LEFT"),
+        ("PADDING",       (0, 1), (-1, -1), 5),
+    ]))
+    story.append(tabla)
+
+    footer = _make_footer(lang)
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()
 
@@ -522,6 +829,64 @@ def delete_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
         factura.pdf_filename = None
         db.commit()
     return
+
+
+# ─── PDF Facturas ─────────────────────────────────────────────
+@router.get("/facturas/informe/pdf", summary="Informe PDF de facturación anual")
+def informe_facturas_pdf(
+    anio: Optional[int] = None,
+    lang: str = "es",
+    db: Session = Depends(get_db),
+):
+    anio = anio or date.today().year
+    facturas = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.anio == anio).all()
+    pdf_bytes = _build_pdf_facturas(facturas, anio=anio, lang=lang)
+    filename  = f"facturas_major_a_casa_{anio}.pdf"
+    return StreamingResponse(
+        BytesIO(pdf_bytes), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ─── PDF Comisiones ───────────────────────────────────────────
+@router.get("/comisiones/informe/pdf", summary="Informe PDF de comisiones en trámite")
+def informe_comisiones_pdf(
+    zona:   Optional[int] = None,
+    mes:    Optional[str] = None,
+    lang:   str = "es",
+    db: Session = Depends(get_db),
+):
+    q = db.query(ComisionMayorACasa).filter(ComisionMayorACasa.estado == "en_tramite")
+    if zona: q = q.filter(ComisionMayorACasa.zona == zona)
+    if mes:  q = q.filter(ComisionMayorACasa.mes_comision == mes)
+    comisiones = q.order_by(ComisionMayorACasa.apellidos).all()
+    pdf_bytes  = _build_pdf_comisiones(comisiones, lang=lang, zona=zona, mes=mes)
+    filename   = f"comisiones_tramite_{date.today().isoformat()}.pdf"
+    return StreamingResponse(
+        BytesIO(pdf_bytes), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ─── PDF Seguimiento ──────────────────────────────────────────
+@router.get("/seguimientos/informe/pdf", summary="Informe PDF de seguimiento")
+def informe_seguimiento_pdf(
+    tipo: str = "entrevista",
+    anio: Optional[int] = None,
+    lang: str = "es",
+    db: Session = Depends(get_db),
+):
+    anio  = anio or date.today().year
+    rows  = db.query(SeguimientoMayorACasa).filter(
+        SeguimientoMayorACasa.tipo == tipo,
+        SeguimientoMayorACasa.anio == anio,
+    ).order_by(SeguimientoMayorACasa.mes).all()
+    pdf_bytes = _build_pdf_seguimiento(rows, tipo=tipo, anio=anio, lang=lang)
+    filename  = f"seguimiento_{tipo}_{anio}.pdf"
+    return StreamingResponse(
+        BytesIO(pdf_bytes), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 UPLOAD_DIR_DOC = Path(__file__).parent.parent / "static" / "uploads" / "documentacion"

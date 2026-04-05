@@ -132,6 +132,11 @@ const I18N = {
     chart_sexo_title:  'Distribución por Género',
     chart_estado_title: 'Distribución por Estado',
     chart_estado_com_title: 'Estado de Tramitación',
+    pdf_fact_anual:    '📋 Facturación del año seleccionado',
+    pdf_com_tramite:   '📋 Comisiones en trámite',
+    toast_pdf_facturas_err: 'Error al generar PDF de facturas',
+    toast_pdf_com_err:      'Error al generar PDF de comisiones',
+    toast_pdf_seg_err:      'Error al generar PDF de seguimiento',
     itab_seguimiento:  '📊 Seguimiento',
     itab_documentacion:'📁 Documentación',
     seg_title:         'Seguimiento anual',
@@ -270,6 +275,11 @@ const I18N = {
     btn_subir_pdf: 'Pujar PDF',
     btn_ver_pdf:   'Veure PDF',
     btn_cambiar_pdf:'Canviar',
+    pdf_fact_anual:    '📋 Facturació de l\'any seleccionat',
+    pdf_com_tramite:   '📋 Comissions en tràmit',
+    toast_pdf_facturas_err: 'Error en generar PDF de factures',
+    toast_pdf_com_err:      'Error en generar PDF de comissions',
+    toast_pdf_seg_err:      'Error en generar PDF de seguiment',
     itab_seguimiento:  '📊 Seguiment',
     itab_documentacion:'📁 Documentació',
     seg_title:         'Seguiment anual',
@@ -1473,6 +1483,88 @@ async function descargarPDF(tipo = 'activos') {
   }
 }
 
+// ── PDF Facturas ──────────────────────────────────────────────
+
+async function descargarPDFFacturas() {
+  const btn      = g('btn-pdf-facturas');
+  const btnArrow = g('btn-pdf-facturas-toggle');
+  btn.disabled = true; btnArrow.disabled = true;
+  btn.innerHTML = t('pdf_generating');
+
+  const params = new URLSearchParams({ anio: state.facturasAnio, lang: state.lang });
+  try {
+    const res = await fetch(`/mayor-a-casa/facturas/informe/pdf?${params}`,
+      { headers: { 'Authorization': `Bearer ${state.token}` } });
+    if (!res.ok) throw new Error(t('toast_pdf_facturas_err'));
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `facturas_${state.facturasAnio}.pdf`;
+    a.click();
+    toast(t('toast_pdf_ok'), 'success');
+  } catch (err) { toast(err.message, 'error'); }
+  finally {
+    btn.disabled = false; btnArrow.disabled = false;
+    btn.innerHTML = t('btn_pdf');
+  }
+}
+
+// ── PDF Comisiones ────────────────────────────────────────────
+
+async function descargarPDFComisiones() {
+  const btn      = g('btn-pdf-comisiones');
+  const btnArrow = g('btn-pdf-comisiones-toggle');
+  btn.disabled = true; btnArrow.disabled = true;
+  btn.innerHTML = t('pdf_generating');
+
+  const params = new URLSearchParams({ lang: state.lang });
+  if (state.filterComisionZona) params.append('zona', state.filterComisionZona);
+  if (state.filterComisionMes)  params.append('mes',  state.filterComisionMes);
+
+  try {
+    const res = await fetch(`/mayor-a-casa/comisiones/informe/pdf?${params}`,
+      { headers: { 'Authorization': `Bearer ${state.token}` } });
+    if (!res.ok) throw new Error(t('toast_pdf_com_err'));
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `comisiones_tramite_${new Date().toISOString().slice(0,10)}.pdf`;
+    a.click();
+    toast(t('toast_pdf_ok'), 'success');
+  } catch (err) { toast(err.message, 'error'); }
+  finally {
+    btn.disabled = false; btnArrow.disabled = false;
+    btn.innerHTML = t('btn_pdf');
+  }
+}
+
+// ── PDF Seguimiento ───────────────────────────────────────────
+
+async function descargarPDFSeguimiento(tipo) {
+  const btn      = g('btn-pdf-seguimiento');
+  const btnArrow = g('btn-pdf-seguimiento-toggle');
+  btn.disabled = true; btnArrow.disabled = true;
+  btn.innerHTML = t('pdf_generating');
+
+  const params = new URLSearchParams({ tipo, anio: state.segAnio, lang: state.lang });
+
+  try {
+    const res = await fetch(`/mayor-a-casa/seguimientos/informe/pdf?${params}`,
+      { headers: { 'Authorization': `Bearer ${state.token}` } });
+    if (!res.ok) throw new Error(t('toast_pdf_seg_err'));
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `seguimiento_${tipo}_${state.segAnio}.pdf`;
+    a.click();
+    toast(t('toast_pdf_ok'), 'success');
+  } catch (err) { toast(err.message, 'error'); }
+  finally {
+    btn.disabled = false; btnArrow.disabled = false;
+    btn.innerHTML = t('btn_pdf');
+  }
+}
+
 // ── Toast ─────────────────────────────────────────────────────
 
 function toast(msg, type = 'info') {
@@ -1524,7 +1616,9 @@ document.addEventListener('DOMContentLoaded', () => {
     descargarPDF(item.dataset.tipo);
   });
   document.addEventListener('click', () => {
-    const menu = g('pdf-menu'); if (menu) menu.classList.add('hidden');
+    ['pdf-menu','pdf-menu-facturas','pdf-menu-comisiones','pdf-menu-seguimiento'].forEach(id => {
+      const m = g(id); if (m) m.classList.add('hidden');
+    });
   });
 
   // Nuevo caso (Usuarios ya no tiene este botón — está en Comisiones)
@@ -1621,6 +1715,45 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSortUI();
       renderTabla();
     });
+  });
+
+  // PDF Facturas
+  g('btn-pdf-facturas').addEventListener('click', () => descargarPDFFacturas());
+  g('btn-pdf-facturas-toggle').addEventListener('click', e => {
+    e.stopPropagation();
+    g('pdf-menu-facturas').classList.toggle('hidden');
+  });
+  g('pdf-menu-facturas').addEventListener('click', e => {
+    const item = e.target.closest('.split-menu-item');
+    if (!item) return;
+    g('pdf-menu-facturas').classList.add('hidden');
+    descargarPDFFacturas();
+  });
+
+  // PDF Comisiones
+  g('btn-pdf-comisiones').addEventListener('click', () => descargarPDFComisiones());
+  g('btn-pdf-comisiones-toggle').addEventListener('click', e => {
+    e.stopPropagation();
+    g('pdf-menu-comisiones').classList.toggle('hidden');
+  });
+  g('pdf-menu-comisiones').addEventListener('click', e => {
+    const item = e.target.closest('.split-menu-item');
+    if (!item) return;
+    g('pdf-menu-comisiones').classList.add('hidden');
+    descargarPDFComisiones();
+  });
+
+  // PDF Seguimiento
+  g('btn-pdf-seguimiento').addEventListener('click', () => descargarPDFSeguimiento(state.segTab));
+  g('btn-pdf-seguimiento-toggle').addEventListener('click', e => {
+    e.stopPropagation();
+    g('pdf-menu-seguimiento').classList.toggle('hidden');
+  });
+  g('pdf-menu-seguimiento').addEventListener('click', e => {
+    const item = e.target.closest('.split-menu-item');
+    if (!item) return;
+    g('pdf-menu-seguimiento').classList.add('hidden');
+    descargarPDFSeguimiento(item.dataset.tipo);
   });
 
   // Seguimiento sub-tabs
