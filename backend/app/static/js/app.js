@@ -710,8 +710,8 @@ function renderSeguimientoChart(tipo) {
   const totalM = rows.reduce((acc, r) => acc + (r.mujeres || 0), 0);
   const total  = totalH + totalM;
   _drawDonut(canvas, legend, [
-    { label: t('seg_th_hombres'), color: '#6366f1', count: totalH },
-    { label: t('seg_th_mujeres'), color: '#f43f5e', count: totalM },
+    { label: t('seg_th_hombres'), color: '#f59e0b', count: totalH },
+    { label: t('seg_th_mujeres'), color: '#9333ea', count: totalM },
   ], total);
 }
 
@@ -855,8 +855,8 @@ function renderStats() {
 
   // Chart 2: Sexo
   _drawDonut(g('chart-sexo'), g('chart-legend-sexo'), [
-    { label: t('sex_hombre'),    color: '#6366f1', count: list.filter(c => c.sexo === 'hombre').length },
-    { label: t('sex_mujer'),     color: '#f43f5e', count: list.filter(c => c.sexo === 'mujer').length },
+    { label: t('sex_hombre'),    color: '#f59e0b', count: list.filter(c => c.sexo === 'hombre').length },
+    { label: t('sex_mujer'),     color: '#9333ea', count: list.filter(c => c.sexo === 'mujer').length },
     { label: t('sex_no_define'), color: '#94a3b8', count: list.filter(c => c.sexo === 'no_define' || !c.sexo).length }
   ], total);
 
@@ -885,8 +885,8 @@ function renderStatsComisiones() {
 
   // Chart 2: Sexo
   _drawDonut(g('chart-sexo-com'), g('chart-legend-sexo-com'), [
-    { label: t('sex_hombre'),    color: '#6366f1', count: list.filter(c => c.sexo === 'hombre').length },
-    { label: t('sex_mujer'),     color: '#f43f5e', count: list.filter(c => c.sexo === 'mujer').length },
+    { label: t('sex_hombre'),    color: '#f59e0b', count: list.filter(c => c.sexo === 'hombre').length },
+    { label: t('sex_mujer'),     color: '#9333ea', count: list.filter(c => c.sexo === 'mujer').length },
     { label: t('sex_no_define'), color: '#94a3b8', count: list.filter(c => c.sexo === 'no_define' || !c.sexo).length }
   ], total);
 
