@@ -1152,10 +1152,6 @@ function initFacturasAnio() {
     state.facturasAnio = parseInt(sel.value);
     cargarFacturas();
   });
-
-  if (!state.facturasAnio || isNaN(state.facturasAnio)) {
-    state.facturasAnio = cur;
-  }
 }
 
 function renderFacturas() {
@@ -1510,49 +1506,26 @@ async function descargarPDF(tipo = 'activos') {
 // ── PDF Facturas ──────────────────────────────────────────────
 
 async function descargarPDFFacturas() {
-  const btn = g('btn-pdf-facturas');
+  const btn      = g('btn-pdf-facturas');
   const btnArrow = g('btn-pdf-facturas-toggle');
-  btn.disabled = true; 
-  btnArrow.disabled = true;
+  btn.disabled = true; btnArrow.disabled = true;
   btn.innerHTML = t('pdf_generating');
 
-  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-  // FORZAMOS un año válido siempre
-  let anio = state.facturasAnio;
-  if (!anio || isNaN(anio)) {
-    anio = new Date().getFullYear();
-    state.facturasAnio = anio;        // lo guardamos para futuras llamadas
-  }
-  // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-
-  const params = new URLSearchParams({ 
-    anio: anio, 
-    lang: state.lang 
-  });
-
+  const params = new URLSearchParams({ anio: state.facturasAnio, lang: state.lang });
   try {
-    const res = await fetch(`/mayor-a-casa/facturas/informe/pdf?${params}`, {
-      headers: { 'Authorization': `Bearer ${state.token}` }
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      console.error('❌ Error 422 detalle:', errorData);   // ← útil para debug
-      throw new Error(t('toast_pdf_facturas_err'));
-    }
-
+    const res = await fetch(`/mayor-a-casa/facturas/informe/pdf?${params}`,
+      { headers: { 'Authorization': `Bearer ${state.token}` } });
+    if (!res.ok) throw new Error(t('toast_pdf_facturas_err'));
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `facturas_${anio}.pdf`;
+    a.download = `facturas_${state.facturasAnio}.pdf`;
     a.click();
     toast(t('toast_pdf_ok'), 'success');
-  } catch (err) {
-    toast(err.message, 'error');
-  } finally {
-    btn.disabled = false; 
-    btnArrow.disabled = false;
-    btn.innerHTML = t('btn_pdf');   // o el texto que uses para "Generar Informe PDF"
+  } catch (err) { toast(err.message, 'error'); }
+  finally {
+    btn.disabled = false; btnArrow.disabled = false;
+    btn.innerHTML = t('btn_pdf');
   }
 }
 
