@@ -12,12 +12,12 @@ services:
   # ──────────────────────────────────────────
   db:
     image: postgres:16-alpine          # Imagen oficial de PostgreSQL, versión ligera
-    container_name: socialapp_db       # Nombre visible en Docker Desktop
+    container_name: apbapp_db       # Nombre visible en Docker Desktop
 
     environment:
-      POSTGRES_USER: socialapp_user       # Usuario de la BD
-      POSTGRES_PASSWORD: socialapp_pass   # Contraseña (cámbiala en producción)
-      POSTGRES_DB: socialapp_db           # Nombre de la base de datos
+      POSTGRES_USER: apbapp_user       # Usuario de la BD
+      POSTGRES_PASSWORD: apbapp_pass   # Contraseña (cámbiala en producción)
+      POSTGRES_DB: apbapp_db           # Nombre de la base de datos
 
     volumes:
       # pgdata guarda los datos aunque apagues el contenedor
@@ -29,7 +29,7 @@ services:
 
     healthcheck:
       # Docker Desktop mostrará "healthy" cuando la BD esté lista
-      test: ["CMD-SHELL", "pg_isready -U socialapp_user -d socialapp_db"]
+      test: ["CMD-SHELL", "pg_isready -U apbapp_user -d apbapp_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -41,7 +41,7 @@ services:
   # SERVICIO 2: Backend FastAPI
   # ──────────────────────────────────────────
   backend:
-    container_name: socialapp_backend  # Nombre visible en Docker Desktop
+    container_name: apbapp_backend  # Nombre visible en Docker Desktop
 
     build:
       context: ./backend               # Carpeta donde está el Dockerfile
@@ -49,13 +49,13 @@ services:
       target: development              # Usa el stage con hot-reload
 
     volumes:
-      # Monta tu carpeta local → el contenedor ve tus cambios en tiempo real
+      # Monta tu carpeta local → el contenedor ver tus cambios en tiempo real
       # Sin esto, tendrías que reconstruir la imagen cada vez que editas código
       - ./backend/app:/api/app
 
     environment:
       # La URL de la BD usa "db" como host (nombre del servicio de arriba)
-      DATABASE_URL: postgresql://socialapp_user:socialapp_pass@db:5432/socialapp_db
+      DATABASE_URL: postgresql://apbapp_user:apbapp_pass@db:5432/apbapp_db
       SECRET_KEY: dev-secret-key-cambia-esto-en-produccion
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -79,4 +79,4 @@ services:
 # ──────────────────────────────────────────
 volumes:
   pgdata:
-    name: socialapp_pgdata
+    name: apbapp_pgdata

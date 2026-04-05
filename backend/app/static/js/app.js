@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — Lógica del frontend de SocialApp
+   app.js — Lógica del frontend de APBApp
    ============================================================ */
 
 'use strict';
@@ -288,9 +288,9 @@ const state = {
   innerTab:    'usuarios',
   modalMode:   'usuario',   // 'usuario' | 'comision'
   // Auth / prefs
-  token:     localStorage.getItem('socialapp_token'),
-  deptName:  localStorage.getItem('socialapp_dept'),
-  lang:      localStorage.getItem('socialapp_lang') || 'es',
+  token:     localStorage.getItem('apbapp_token'),
+  deptName:  localStorage.getItem('apbapp_dept'),
+  lang:      localStorage.getItem('apbapp_lang') || 'es',
 };
 
 // ── Utilidades ────────────────────────────────────────────────
@@ -380,8 +380,8 @@ async function onLoginSubmit(e) {
     const data = await api('POST', '/auth/login', { username: user, password: pass });
     state.token    = data.access_token;
     state.deptName = data.dept_name;
-    localStorage.setItem('socialapp_token', data.access_token);
-    localStorage.setItem('socialapp_dept', data.dept_name);
+    localStorage.setItem('apbapp_token', data.access_token);
+    localStorage.setItem('apbapp_dept', data.dept_name);
     initApp();
     toast(`${t('welcome')} ${state.deptName}`, 'success');
   } catch (err) {
@@ -395,8 +395,8 @@ async function onLoginSubmit(e) {
 function logout() {
   state.token = null;
   state.deptName = null;
-  localStorage.removeItem('socialapp_token');
-  localStorage.removeItem('socialapp_dept');
+  localStorage.removeItem('apbapp_token');
+  localStorage.removeItem('apbapp_dept');
   g('main-app').classList.add('hidden');
   g('login-screen').classList.remove('hidden');
   g('login-form').reset();
@@ -944,12 +944,12 @@ function renderFacturas() {
 // ── Tema claro/oscuro ─────────────────────────────────────────
 
 function initTheme() {
-  applyTheme(localStorage.getItem('socialapp_theme') || 'dark');
+  applyTheme(localStorage.getItem('apbapp_theme') || 'dark');
 }
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('socialapp_theme', theme);
+  localStorage.setItem('apbapp_theme', theme);
   const btn = g('btn-theme');
   if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
   renderPieChart(); // re-render with correct background color
@@ -963,7 +963,7 @@ function toggleTheme() {
 
 function toggleLang() {
   state.lang = state.lang === 'es' ? 'val' : 'es';
-  localStorage.setItem('socialapp_lang', state.lang);
+  localStorage.setItem('apbapp_lang', state.lang);
   applyI18n();
   renderTabla();
   renderStats();

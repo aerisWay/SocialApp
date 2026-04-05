@@ -20,7 +20,7 @@ from app.config import settings
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    print("\U0001f680 Arrancando SocialApp API...")
+    print("\U0001f680 Arrancando APBApp API...")
 
     try:
         # 1. Crea todas las tablas si no existen
@@ -200,12 +200,12 @@ async def lifespan(_app: FastAPI):
         traceback.print_exc()
 
     yield
-    print("\U0001f6d1 Apagando SocialApp API...")
+    print("\U0001f6d1 Apagando APBApp API...")
 
 
 app = FastAPI(
-    title="SocialApp API",
-    description="Backend de SocialApp — gestión de usuarios, posts y más",
+    title="APBApp API",
+    description="Backend de APBApp — gestión de servicios sociales",
     version="0.1.0",
     lifespan=lifespan,
 )
