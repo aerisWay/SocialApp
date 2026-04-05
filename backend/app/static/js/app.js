@@ -14,7 +14,7 @@ const I18N = {
     lbl_password:  'Contraseña',
     btn_login:     'Iniciar sesión',
     btn_logout:    'Cerrar sesión',
-    view_title:    'Major a Casa',
+    view_title:    'Menjar a Casa',
     itab_usuarios:  '👥 Usuarios',
     itab_facturas:  '🧾 Facturas',
     itab_comisiones:'📋 Comisiones',
@@ -140,7 +140,7 @@ const I18N = {
     lbl_password:  'Contrasenya',
     btn_login:     'Iniciar sessió',
     btn_logout:    'Tancar sessió',
-    view_title:    'Major a Casa',
+    view_title:    'Menjar a Casa',
     itab_usuarios:  '👥 Usuaris',
     itab_facturas:  '🧾 Factures',
     itab_comisiones:'📋 Comissions',
@@ -728,27 +728,27 @@ function renderTabla() {
   const sexLabels = { hombre: t('sex_hombre'), mujer: t('sex_mujer'), no_define: t('sex_no_define') };
 
   if (!state.casos.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_data')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-cell">${t('empty_no_data')}</td></tr>`;
     return;
   }
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="loading-cell"><div class="spinner"></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="loading-cell"><div class="spinner"></div></td></tr>`;
     return;
   }
 
   tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
-      <td>${esc(c.dni) || '—'}</td>
-      <td>${state.sipSearch ? highlightSIP(c.sip, state.sipSearch) : (esc(c.sip) || '—')}</td>
-      <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
-      <td>${rangoEdadLabel(c.rango_edad)}</td>
-      <td>${sexLabels[c.sexo] || '—'}</td>
-      <td>${esc(c.telefono) || '—'}</td>
-      <td>${formatMes(c.mes_renovacion)}</td>
-      <td>${formatFecha(c.fecha_alta)}</td>
-      <td><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? t('badge_activo') : t('badge_baja')}</span></td>
-      <td class="td-actions">
+      <td class="td-center">${esc(c.dni) || '—'}</td>
+      <td class="td-center">${state.sipSearch ? highlightSIP(c.sip, state.sipSearch) : (esc(c.sip) || '—')}</td>
+      <td class="td-center">${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
+      <td class="td-center">${rangoEdadLabel(c.rango_edad)}</td>
+      <td class="td-center">${sexLabels[c.sexo] || '—'}</td>
+      <td class="td-center">${esc(c.telefono) || '—'}</td>
+      <td class="td-center">${formatMes(c.mes_renovacion)}</td>
+      <td class="td-center">${formatFecha(c.fecha_alta)}</td>
+      <td class="td-center"><span class="badge ${c.activo ? 'badge-activo' : 'badge-baja'}">${c.activo ? t('badge_activo') : t('badge_baja')}</span></td>
+      <td class="td-actions td-center">
         <button class="btn-icon edit-btn" data-id="${c.id}" title="Editar">✏️</button>
         <button class="btn-icon delete-btn" data-id="${c.id}" title="Eliminar">🗑</button>
       </td>
