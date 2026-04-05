@@ -209,7 +209,9 @@ async def lifespan(_app: FastAPI):
         from app.models.comision_mayor_a_casa import ComisionMayorACasa
         db3 = SessionLocal()
         try:
-            if db3.query(ComisionMayorACasa).count() == 0:
+            # Si hay menos de 20 (el total de ejemplos), limpiamos y re-insertamos los 20 totales
+            if db3.query(ComisionMayorACasa).count() < 20:
+                db3.query(ComisionMayorACasa).delete()
                 _mes = _date.today().strftime("%Y-%m")
                 _SEED_COM = [
                     dict(apellidos="Pérez Gómez",    nombre="Antonia",  dni="11111111A", sip="20000001", zona=1, sexo="mujer",  rango_edad="mayor_65", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
