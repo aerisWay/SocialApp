@@ -68,7 +68,7 @@
         <button class="main-tab active">Servicio de Promoción</button>
       </nav>
       <div class="topbar-right">
-        <div class="topbar-badge">v1.0 · Prototipo</div>
+        <div class="topbar-badge">v1.1 · Prototipo</div>
         <button class="btn-lang" id="btn-lang" title="Cambiar idioma">ES</button>
         <button class="btn-theme" id="btn-theme" title="Cambiar tema claro/oscuro">🌙</button>
         <button class="btn-logout" id="btn-logout" title="Cerrar sesión" data-i18n="btn_logout">
@@ -92,81 +92,205 @@
     <main class="content">
       <section id="view-mayor" class="view active">
 
+        <!-- Cabecera de la vista -->
         <div class="view-header">
           <div>
             <h1 class="view-title" data-i18n="view_title">Major a Casa</h1>
             <p class="view-dept-subtitle">Concejalía de Bienestar Social - Ayto. Benidorm</p>
           </div>
-          <div class="view-actions">
+        </div>
+
+        <!-- ── Pestañas internas ── -->
+        <nav class="inner-tabs-nav" id="inner-tabs-nav">
+          <button class="inner-tab active" data-itab="usuarios" data-i18n="itab_usuarios">👥 Usuarios</button>
+          <button class="inner-tab" data-itab="facturas"   data-i18n="itab_facturas">🧾 Facturas</button>
+          <button class="inner-tab" data-itab="comisiones" data-i18n="itab_comisiones">📋 Comisiones</button>
+        </nav>
+
+        <!-- ════════════════ PESTAÑA USUARIOS ════════════════ -->
+        <div id="itab-usuarios" class="inner-tab-panel">
+
+          <div class="itab-actions">
             <div class="btn-split-group" id="pdf-group">
               <button class="btn btn-pdf btn-split-main" id="btn-pdf" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
               <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-toggle" title="Seleccionar tipo de informe">▾</button>
               <div class="split-menu hidden" id="pdf-menu">
-                <button class="split-menu-item" data-tipo="activos" data-i18n="pdf_activos">📋 Todos los casos activos</button>
+                <button class="split-menu-item" data-tipo="activos"    data-i18n="pdf_activos">📋 Todos los casos activos</button>
                 <button class="split-menu-item" data-tipo="renovacion" data-i18n="pdf_renov">📅 Renovación del mes actual</button>
               </div>
             </div>
-            <button class="btn btn-primary" id="btn-nuevo" data-i18n="btn_nuevo"><span>✦</span> Nuevo caso</button>
           </div>
-        </div>
 
-        <div class="stats-row">
-          <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label" data-i18n="stat_total">Total casos</div></div>
-          <div class="stat-card card-green"><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label" data-i18n="stat_activos">Activos</div></div>
-          <div class="stat-card card-gray"><span class="stat-icon">📁</span><div class="stat-value muted" id="stat-bajas">—</div><div class="stat-label" data-i18n="stat_bajas">Dados de baja</div></div>
-          <div class="stat-card card-cyan"><span class="stat-icon">📍</span><div class="stat-value accent" id="stat-zonas">—</div><div class="stat-label" data-i18n="stat_zonas">Zonas con casos</div></div>
-          <div class="stat-card card-amber"><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label" data-i18n="stat_hombres">Hombres</div></div>
-          <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label" data-i18n="stat_mujeres">Mujeres</div></div>
-        </div>
+          <!-- Estadísticas -->
+          <div class="stats-row">
+            <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label" data-i18n="stat_total">Total casos</div></div>
+            <div class="stat-card card-green" ><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label" data-i18n="stat_activos">Activos</div></div>
+            <div class="stat-card card-gray"  ><span class="stat-icon">📁</span><div class="stat-value muted"   id="stat-bajas">—</div><div class="stat-label" data-i18n="stat_bajas">Dados de baja</div></div>
+            <div class="stat-card card-cyan"  ><span class="stat-icon">📍</span><div class="stat-value accent"  id="stat-zonas">—</div><div class="stat-label" data-i18n="stat_zonas">Zonas con casos</div></div>
+            <div class="stat-card card-amber" ><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label" data-i18n="stat_hombres">Hombres</div></div>
+            <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label" data-i18n="stat_mujeres">Mujeres</div></div>
+          </div>
 
-        <div class="table-toolbar">
-          <div class="toolbar-group">
-            <span class="toolbar-label" data-i18n="lbl_zona">Zona:</span>
-            <div id="zona-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="filter-btn active" data-zona="" data-i18n="zona_todas">Todas</button>
-              <button class="filter-btn" data-zona="1"><span data-i18n="lbl_zona">Zona:</span> 1</button>
-              <button class="filter-btn" data-zona="2"><span data-i18n="lbl_zona">Zona:</span> 2</button>
-              <button class="filter-btn" data-zona="3"><span data-i18n="lbl_zona">Zona:</span> 3</button>
-              <button class="filter-btn" data-zona="4"><span data-i18n="lbl_zona">Zona:</span> 4</button>
+          <!-- Gráfico de distribución por edad -->
+          <div class="chart-row">
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_edad_title">Distribución por edad</div>
+              <div class="chart-inner">
+                <canvas id="chart-edad" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend"></div>
+              </div>
             </div>
           </div>
-          <div class="toolbar-group">
-            <div class="sip-search-wrap">
-              <span class="sip-search-icon">🔍</span>
-              <input type="text" id="sip-search" class="sip-search" placeholder="Buscar por SIP…" data-i18n-placeholder="sip_search_placeholder" />
+
+          <!-- Barra de herramientas -->
+          <div class="table-toolbar">
+            <div class="toolbar-group">
+              <span class="toolbar-label" data-i18n="lbl_zona">Zona:</span>
+              <div id="zona-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" data-zona="" data-i18n="zona_todas">Todas</button>
+                <button class="filter-btn" data-zona="1">Zona 1</button>
+                <button class="filter-btn" data-zona="2">Zona 2</button>
+                <button class="filter-btn" data-zona="3">Zona 3</button>
+                <button class="filter-btn" data-zona="4">Zona 4</button>
+              </div>
+            </div>
+            <div class="toolbar-group">
+              <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <input type="text" id="sip-search" class="search-input" placeholder="Buscar por SIP…" data-i18n-placeholder="sip_search_placeholder" />
+              </div>
+            </div>
+            <div class="toolbar-group">
+              <span class="toolbar-label" data-i18n="lbl_ordenar">Ordenar:</span>
+              <button class="sort-btn active" data-sort="nombre"    data-i18n="sort_nombre">Nombre <span class="sort-dir">↑</span></button>
+              <button class="sort-btn"        data-sort="renovacion" data-i18n="sort_renov">Renovación <span class="sort-dir">↕</span></button>
+              <button class="sort-btn"        data-sort="fecha_alta" data-i18n="sort_alta">Alta <span class="sort-dir">↕</span></button>
+              <button class="sort-btn"        data-sort="activo"     data-i18n="sort_estado">Estado <span class="sort-dir">↕</span></button>
+              <span class="results-count" id="results-count">0 resultados</span>
             </div>
           </div>
-          <div class="toolbar-group">
-            <span class="toolbar-label" data-i18n="lbl_ordenar">Ordenar:</span>
-            <button class="sort-btn active" data-sort="nombre" data-i18n="sort_nombre">Nombre <span class="sort-dir">↑</span></button>
-            <button class="sort-btn" data-sort="renovacion" data-i18n="sort_renov">Renovación <span class="sort-dir">↕</span></button>
-            <button class="sort-btn" data-sort="fecha_alta" data-i18n="sort_alta">Alta <span class="sort-dir">↕</span></button>
-            <button class="sort-btn" data-sort="activo" data-i18n="sort_estado">Estado <span class="sort-dir">↕</span></button>
-            <span class="results-count" id="results-count">0 resultados</span>
-          </div>
-        </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th data-i18n="th_nombre">Apellidos, Nombre</th>
-                <th>DNI</th>
-                <th>SIP</th>
-                <th data-i18n="th_zona">Zona</th>
-                <th data-i18n="th_sexo">Sexo</th>
-                <th data-i18n="th_telefono">Teléfono</th>
-                <th data-i18n="th_renov">Mes Renov.</th>
-                <th data-i18n="th_alta">Fecha Alta</th>
-                <th data-i18n="th_estado">Estado</th>
-                <th class="th-actions" data-i18n="th_acciones">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-casos">
-              <tr><td colspan="10" class="loading-cell"><div class="spinner"></div><span data-i18n="loading">Cargando casos…</span></td></tr>
-            </tbody>
-          </table>
-        </div>
+          <!-- Tabla de usuarios -->
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_nombre">Apellidos, Nombre</th>
+                  <th>DNI</th>
+                  <th>SIP</th>
+                  <th data-i18n="th_zona">Zona</th>
+                  <th data-i18n="th_edad">Edad</th>
+                  <th data-i18n="th_sexo">Sexo</th>
+                  <th data-i18n="th_telefono">Teléfono</th>
+                  <th data-i18n="th_renov">Mes Renov.</th>
+                  <th data-i18n="th_alta">Fecha Alta</th>
+                  <th data-i18n="th_estado">Estado</th>
+                  <th class="th-actions" data-i18n="th_acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-casos">
+                <tr><td colspan="11" class="loading-cell"><div class="spinner"></div><span data-i18n="loading">Cargando casos…</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /itab-usuarios -->
+
+        <!-- ════════════════ PESTAÑA FACTURAS ════════════════ -->
+        <div id="itab-facturas" class="inner-tab-panel hidden">
+
+          <div class="facturas-header">
+            <h3 class="facturas-title" data-i18n="facturas_title">Facturas anuales</h3>
+            <div class="facturas-year-wrap">
+              <label class="toolbar-label" data-i18n="facturas_anio">Año:</label>
+              <select id="facturas-anio" class="year-select"></select>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table facturas-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_mes">Mes</th>
+                  <th data-i18n="th_num_casos">Nº Casos</th>
+                  <th data-i18n="th_cuantia">Cuantía (€)</th>
+                  <th data-i18n="th_pdf_adjunto">PDF Adjunto</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-facturas">
+                <tr><td colspan="4" class="loading-cell"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /itab-facturas -->
+
+        <!-- ════════════════ PESTAÑA COMISIONES ════════════════ -->
+        <div id="itab-comisiones" class="inner-tab-panel hidden">
+
+          <div class="itab-actions">
+            <button class="btn btn-primary" id="btn-nuevo-comision" data-i18n="btn_nuevo_comision">
+              <span>✦</span> Nueva comisión
+            </button>
+          </div>
+
+          <!-- Estadísticas de comisiones -->
+          <div class="stats-row stats-comisiones">
+            <div class="stat-card card-indigo"><span class="stat-icon">📋</span><div class="stat-value" id="stat-com-total">—</div><div class="stat-label" data-i18n="comision_total">Total comisiones</div></div>
+            <div class="stat-card card-cyan"  ><span class="stat-icon">⏳</span><div class="stat-value accent" id="stat-com-tramite">—</div><div class="stat-label" data-i18n="stat_tramite">En trámite</div></div>
+            <div class="stat-card card-green" ><span class="stat-icon">✅</span><div class="stat-value success" id="stat-com-aprobadas">—</div><div class="stat-label" data-i18n="stat_aprobadas">Aprobadas</div></div>
+            <div class="stat-card card-gray"  ><span class="stat-icon">✗</span><div class="stat-value muted" id="stat-com-denegadas">—</div><div class="stat-label" data-i18n="stat_denegadas">Denegadas</div></div>
+          </div>
+
+          <!-- Barra de herramientas comisiones -->
+          <div class="table-toolbar">
+            <div class="toolbar-group">
+              <span class="toolbar-label" data-i18n="lbl_zona">Zona:</span>
+              <div id="zona-filters-comision" style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" data-zona-c="" data-i18n="zona_todas">Todas</button>
+                <button class="filter-btn" data-zona-c="1">Zona 1</button>
+                <button class="filter-btn" data-zona-c="2">Zona 2</button>
+                <button class="filter-btn" data-zona-c="3">Zona 3</button>
+                <button class="filter-btn" data-zona-c="4">Zona 4</button>
+              </div>
+            </div>
+            <div class="toolbar-group">
+              <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <input type="text" id="sip-search-comision" class="search-input" placeholder="Buscar por SIP…" data-i18n-placeholder="sip_search_placeholder" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de comisiones -->
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_nombre">Apellidos, Nombre</th>
+                  <th>DNI</th>
+                  <th>SIP</th>
+                  <th data-i18n="th_zona">Zona</th>
+                  <th data-i18n="th_edad">Edad</th>
+                  <th data-i18n="th_sexo">Sexo</th>
+                  <th data-i18n="th_alta">F. Alta</th>
+                  <th data-i18n="th_estado_comision">Estado</th>
+                  <th class="th-actions" data-i18n="th_acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-comisiones">
+                <tr><td colspan="9" class="loading-cell"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /itab-comisiones -->
 
       </section>
     </main>
@@ -214,11 +338,20 @@
             </select>
           </div>
           <div class="form-group">
+            <label for="f-rango-edad" data-i18n="lbl_rango_edad">Rango de edad</label>
+            <select id="f-rango-edad" name="rango_edad">
+              <option value="" data-i18n="opt_no_sexo">— No especificado —</option>
+              <option value="menor_60" data-i18n="opt_menor_60">&lt; 60 años</option>
+              <option value="60_65"    data-i18n="opt_60_65">60-65 años</option>
+              <option value="mayor_65" data-i18n="opt_mayor_65">&gt; 65 años</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="f-sexo" data-i18n="lbl_sexo">Sexo</label>
             <select id="f-sexo" name="sexo">
               <option value="" data-i18n="opt_no_sexo">— No especificado —</option>
-              <option value="hombre" data-i18n="sex_hombre">Hombre</option>
-              <option value="mujer" data-i18n="sex_mujer">Mujer</option>
+              <option value="hombre"    data-i18n="sex_hombre">Hombre</option>
+              <option value="mujer"     data-i18n="sex_mujer">Mujer</option>
               <option value="no_define" data-i18n="sex_no_define">No se define</option>
             </select>
           </div>
@@ -242,7 +375,9 @@
             <label for="f-dir" data-i18n="lbl_direccion">Dirección</label>
             <input type="text" id="f-dir" name="direccion" placeholder="Calle Mayor, 1, 2º A" />
           </div>
-          <div class="form-group form-group-toggle">
+
+          <!-- Solo para usuarios: estado activo/baja -->
+          <div class="form-group form-group-toggle" id="activo-group">
             <label data-i18n="lbl_estado">Estado del caso</label>
             <div class="toggle-row">
               <label class="toggle-switch">
@@ -252,6 +387,17 @@
               <span class="toggle-label" id="toggle-label-text">Activo</span>
             </div>
           </div>
+
+          <!-- Solo para comisiones: estado tramite/aprobado/denegado -->
+          <div class="form-group" id="comision-estado-group" style="display:none">
+            <label for="f-estado-comision" data-i18n="lbl_estado_comision">Estado de la comisión</label>
+            <select id="f-estado-comision" name="estado">
+              <option value="en_tramite" data-i18n="badge_tramite_opt">En trámite</option>
+              <option value="aprobado"   data-i18n="badge_aprobado_opt">Aprobado</option>
+              <option value="denegado"   data-i18n="badge_denegado_opt">Denegado</option>
+            </select>
+          </div>
+
           <div class="form-group span-2">
             <label for="f-obs" data-i18n="lbl_obs">Observaciones / Notas</label>
             <textarea id="f-obs" name="observaciones" rows="3" placeholder="Información adicional…"></textarea>
@@ -261,6 +407,7 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-danger-ghost hidden" id="btn-eliminar" data-i18n="btn_eliminar">🗑️ Eliminar caso</button>
+        <button type="button" class="btn btn-success-ghost hidden" id="btn-aprobar" data-i18n="btn_aprobar">✓ Aprobar y crear usuario</button>
         <div class="modal-footer-right">
           <button type="button" class="btn btn-ghost" id="modal-cancel" data-i18n="btn_cancelar">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="modal-submit" form="caso-form" data-i18n="btn_guardar">Guardar</button>
