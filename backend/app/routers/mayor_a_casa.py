@@ -824,18 +824,28 @@ def delete_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
 # ─── PDF Facturas ─────────────────────────────────────────────
 @router.get("/facturas/informe/pdf", summary="Informe PDF de facturación anual")
 def informe_facturas_pdf(
-    anio: Optional[int] = None,
+    anio: Optional[str] = None,
     lang: str = "es",
     db: Session = Depends(get_db),
 ):
-    anio = anio or date.today().year
-    facturas = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.anio == anio).all()
-    pdf_bytes = _build_pdf_facturas(facturas, anio=anio, lang=lang)
-    filename  = f"facturas_major_a_casa_{anio}.pdf"
-    return StreamingResponse(
-        BytesIO(pdf_bytes), media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    try:
+        real_anio = date.today().year
+        if anio and anio.isdigit():
+            real_anio = int(anio)
+        
+        facturas = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.anio == real_anio).all()
+        pdf_bytes = _build_pdf_facturas(facturas, anio=real_anio, lang=lang)
+        filename  = f"facturas_major_a_casa_{real_anio}.pdf"
+        return StreamingResponse(
+            BytesIO(pdf_bytes), media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as e:
+        import traceback
+        err_msg = traceback.format_exc()
+        with open("/tmp/pdf_error.log", "w", encoding="utf-8") as f:
+            f.write(err_msg)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── PDF Comisiones ───────────────────────────────────────────
