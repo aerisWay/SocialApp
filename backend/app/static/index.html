@@ -258,6 +258,10 @@
               </div>
             </div>
             <div class="toolbar-group">
+              <span class="toolbar-label" data-i18n="lbl_mes">Mes:</span>
+              <input type="month" id="com-mes-filter" class="search-input" style="width:160px;" />
+            </div>
+            <div class="toolbar-group">
               <div class="search-wrap">
                 <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
@@ -280,12 +284,13 @@
                   <th data-i18n="th_edad">Edad</th>
                   <th data-i18n="th_sexo">Sexo</th>
                   <th data-i18n="th_alta">F. Alta</th>
+                  <th data-i18n="lbl_mes">Mes</th>
                   <th data-i18n="th_estado_comision">Estado</th>
                   <th class="th-actions" data-i18n="th_acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbody-comisiones">
-                <tr><td colspan="9" class="loading-cell"><div class="spinner"></div></td></tr>
+                <tr><td colspan="10" class="loading-cell"><div class="spinner"></div></td></tr>
               </tbody>
             </table>
           </div>

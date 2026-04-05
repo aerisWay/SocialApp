@@ -42,6 +42,9 @@ class ComisionMayorACasa(Base):
     # 'en_tramite' | 'aprobado' | 'denegado'
     estado = Column(String(20), default='en_tramite', nullable=False)
 
+    # ── Campo nuevo solicitado ────────────────────────────────
+    mes_comision = Column(String(7), nullable=True)  # '2026-04'
+
     # ── Notas ─────────────────────────────────────────────────
     observaciones = Column(Text, nullable=True)
 

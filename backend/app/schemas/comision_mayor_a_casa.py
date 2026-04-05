@@ -28,6 +28,7 @@ class ComisionCreate(BaseModel):
     fecha_alta:     Optional[date] = None
     fecha_baja:     Optional[date] = None
     estado:         str = 'en_tramite'
+    mes_comision:   Optional[str] = None
     observaciones:  Optional[str] = None
 
     @model_validator(mode='after')
@@ -83,6 +84,7 @@ class ComisionUpdate(BaseModel):
     fecha_alta:     Optional[date] = None
     fecha_baja:     Optional[date] = None
     estado:         Optional[str]  = None
+    mes_comision:   Optional[str]  = None
     observaciones:  Optional[str]  = None
 
     @field_validator("estado")
@@ -126,6 +128,7 @@ class ComisionResponse(BaseModel):
     fecha_alta:     Optional[date]
     fecha_baja:     Optional[date]
     estado:         str
+    mes_comision:   Optional[str]
     observaciones:  Optional[str]
     caso_id:        Optional[int]
     created_at:     datetime

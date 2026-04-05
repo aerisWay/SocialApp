@@ -312,6 +312,7 @@ def generar_informe_renovacion_pdf(zona: Optional[int] = None, lang: str = "es",
 def list_comisiones(
     zona:   Optional[int] = None,
     estado: Optional[str] = None,
+    mes:    Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     q = db.query(ComisionMayorACasa)
@@ -319,11 +320,15 @@ def list_comisiones(
         q = q.filter(ComisionMayorACasa.zona == zona)
     if estado:
         q = q.filter(ComisionMayorACasa.estado == estado)
+    if mes:
+        q = q.filter(ComisionMayorACasa.mes_comision == mes)
     return q.order_by(ComisionMayorACasa.apellidos).all()
 
 
 @router.post("/comisiones/", response_model=ComisionResponse, status_code=201, summary="Crear comisión")
 def create_comision(data: ComisionCreate, db: Session = Depends(get_db)):
+    if not data.mes_comision:
+        data.mes_comision = date.today().strftime("%Y-%m")
     comision = ComisionMayorACasa(**data.model_dump())
     db.add(comision)
     db.commit()
@@ -451,3 +456,18 @@ def download_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Archivo no encontrado en servidor")
     return FileResponse(str(filepath), media_type="application/pdf",
                         filename=f"factura_{factura.anio}_{factura.mes:02d}.pdf")
+
+
+@router.delete("/facturas/{factura_id}/pdf", status_code=204, summary="Eliminar PDF adjunto de factura")
+def delete_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
+    factura = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.id == factura_id).first()
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    if factura.pdf_filename:
+        filepath = UPLOAD_DIR / factura.pdf_filename
+        if filepath.exists():
+            filepath.unlink()
+        factura.pdf_filename = None
+        db.commit()
+    return

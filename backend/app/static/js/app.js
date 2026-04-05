@@ -123,7 +123,11 @@ const I18N = {
     th_pdf_adjunto:'PDF Adjunto',
     btn_subir_pdf: 'Subir PDF',
     btn_ver_pdf:   'Ver PDF',
-    btn_cambiar_pdf:'Cambiar',
+    btn_cambiar_pdf: 'Cambiar',
+    btn_quitar_pdf: 'Eliminar PDF',
+    confirm_quitar_pdf: '¿Seguro que quieres eliminar el PDF adjunto?',
+    toast_pdf_deleted: 'PDF eliminado correctamente',
+    lbl_mes:       'Mes:',
   },
   val: {
     login_sub:     'Accés per a APB — Regidoria de Benestar Social',
@@ -148,6 +152,10 @@ const I18N = {
     stat_denegadas: 'Denegades',
     chart_edad_title: 'Distribució per edat',
     lbl_zona:      'Zona:',
+    lbl_mes:       'Mes:',
+    btn_quitar_pdf: 'Eliminar PDF',
+    confirm_quitar_pdf: 'Segur que vols eliminar el PDF adjunt?',
+    toast_pdf_deleted: 'PDF eliminat correctament',
     zona_todas:    'Totes',
     lbl_ordenar:   'Ordenar:',
     sort_nombre:   'Nom',
@@ -280,6 +288,7 @@ const state = {
   comisiones:          [],
   editingComisionId:   null,
   filterComisionZona:  null,
+  filterComisionMes:   null,
   sipSearchComision:   '',
   // Facturas
   facturas:    [],
@@ -483,6 +492,11 @@ async function actualizarComision(id, datos) {
 async function eliminarComision(id) {
   await api('DELETE', `/mayor-a-casa/comisiones/${id}`);
   await cargarComisiones();
+}
+
+async function eliminarPdfFactura(id) {
+  await api('DELETE', `/mayor-a-casa/facturas/${id}/pdf`);
+  await cargarFacturas();
 }
 
 async function aprobarComision(id) {
@@ -767,12 +781,15 @@ function getFilteredComisiones() {
   if (state.filterComisionZona !== null) {
     list = list.filter(c => c.zona === state.filterComisionZona);
   }
+  if (state.filterComisionMes) {
+    list = list.filter(c => c.mes_comision === state.filterComisionMes);
+  }
   if (state.sipSearchComision) {
     const q = state.sipSearchComision.toLowerCase();
     list = list.filter(c => c.sip && c.sip.toLowerCase().includes(q));
   }
   return list.sort((a, b) =>
-    `${a.apellidos} ${a.nombre}`.localeCompare(`${b.apellidos} ${b.nombre}`, 'es', { sensitivity: 'base' })
+    `${a.apellidos || ''} ${a.nombre || ''}`.localeCompare(`${b.apellidos || ''} ${b.nombre || ''}`, 'es', { sensitivity: 'base' })
   );
 }
 
@@ -792,11 +809,11 @@ function renderComisiones() {
   const sexLabels = { hombre: t('sex_hombre'), mujer: t('sex_mujer'), no_define: t('sex_no_define') };
 
   if (!state.comisiones.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_data')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_data')}</td></tr>`;
     return;
   }
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">${t('empty_no_filter')}</td></tr>`;
     return;
   }
 
@@ -809,6 +826,7 @@ function renderComisiones() {
       <td>${rangoEdadLabel(c.rango_edad)}</td>
       <td>${sexLabels[c.sexo] || '—'}</td>
       <td>${formatFecha(c.fecha_alta)}</td>
+      <td>${formatMes(c.mes_comision)}</td>
       <td>${estadoBadge(c.estado)}</td>
       <td class="td-actions">
         <button class="btn-icon edit-btn-c" data-id="${c.id}" title="Editar">✏️</button>
@@ -892,7 +910,11 @@ function renderFacturas() {
         </td>
         <td class="td-pdf-cell">
           ${hasPdf
-            ? `<a class="btn btn-ghost btn-sm" href="/static/uploads/facturas/${factura.pdf_filename}" target="_blank">📄 ${t('btn_ver_pdf')}</a>`
+            ? `
+              <div class="pdf-btn-group">
+                <a class="btn btn-ghost btn-sm" href="/static/uploads/facturas/${factura.pdf_filename}" target="_blank">📄 ${t('btn_ver_pdf')}</a>
+                <button class="btn btn-ghost btn-sm delete-pdf-btn" data-fid="${fId}" title="${t('btn_quitar_pdf')}">🗑</button>
+              </div>`
             : ''}
           <label class="btn btn-ghost btn-sm upload-label">
             📎 ${hasPdf ? t('btn_cambiar_pdf') : t('btn_subir_pdf')}
@@ -937,6 +959,20 @@ function renderFacturas() {
         await cargarFacturas();
         toast('PDF subido correctamente', 'success');
       } catch (err) { toast(err.message, 'error'); }
+    });
+  });
+
+  // Eliminar PDF
+  tbody.querySelectorAll('.delete-pdf-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const fid = btn.dataset.fid;
+      if (!fid) return;
+      if (confirm(t('confirm_quitar_pdf'))) {
+        try {
+          await eliminarPdfFactura(fid);
+          toast(t('toast_pdf_deleted'), 'success');
+        } catch (err) { toast(err.message, 'error'); }
+      }
     });
   });
 }
@@ -1290,6 +1326,13 @@ document.addEventListener('DOMContentLoaded', () => {
   g('sip-search-comision').addEventListener('input', e => {
     state.sipSearchComision = e.target.value.trim();
     renderComisiones();
+  });
+
+  // Mes filter (Comisiones)
+  g('com-mes-filter').addEventListener('change', e => {
+    state.filterComisionMes = e.target.value || null;
+    renderComisiones();
+    renderStatsComisiones();
   });
 
   // Sort buttons
