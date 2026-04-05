@@ -190,13 +190,13 @@ def _make_footer(lang: str = "es"):
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(gris)
         canvas.drawString(1.5 * cm, 1.0 * cm, t["footer"])
-        page_w, _ = canvas.getPageSize()
+        page_w  = canvas._pagesize[0]
         x_right = page_w - 1.5 * cm
         if second_logo.exists():
             try:
                 canvas.drawImage(str(second_logo), x_right - 8.5 * cm, 0.3 * cm,
                                  width=8 * cm, height=3.2 * cm,
-                                 preserveAspectRatio=True, mask='auto-opaque')
+                                 preserveAspectRatio=True, mask='auto')
                 x_right -= 8.8 * cm
             except Exception:
                 pass
@@ -225,6 +225,7 @@ def _build_pdf_facturas(facturas: list, anio: int, lang: str = "es") -> bytes:
     azul  = colors.HexColor("#1f6feb")
     gris  = colors.HexColor("#6e7681")
     claro = colors.HexColor("#f6f8fa")
+    verde = colors.HexColor("#0d6e3f")
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
@@ -237,59 +238,68 @@ def _build_pdf_facturas(facturas: list, anio: int, lang: str = "es") -> bytes:
                               fontSize=10, textColor=gris, spaceAfter=16, alignment=TA_CENTER)
     num_st   = ParagraphStyle("n", parent=styles["Normal"],
                               fontSize=9, alignment=TA_RIGHT)
-    cell_st  = ParagraphStyle("c", parent=styles["Normal"], fontSize=9, alignment=TA_CENTER)
 
+    # Build lookup: mes → factura
     by_mes = {f.mes: f for f in facturas}
     total_casos   = sum((f.num_casos or 0) for f in facturas)
-    total_cuantia = float(sum((f.cuantia or 0) for f in facturas))
+    total_cuantia = float(sum((f.cuantia or 0) for f in facturas)) or 0.0
 
     story = [
-        Paragraph(f"Major a Casa — Facturacion {anio}", title_st),
+        Paragraph(f"Major a Casa — Facturación {anio}", title_st),
         Paragraph(f"{t['generated']} {date.today().strftime('%d/%m/%Y')}", sub_st),
+        Paragraph(
+            f"Total casos: <b>{total_casos}</b>   ·   Total cuantía: <b>{total_cuantia:,.2f} €</b>",
+            ParagraphStyle("st", parent=styles["Normal"], fontSize=9, textColor=azul,
+                           spaceAfter=10, alignment=TA_CENTER)
+        ),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e1e4e8")),
         Spacer(1, 0.4*cm),
     ]
 
-    headers = [
-        Paragraph("<b>Mes</b>", cell_st),
-        Paragraph("<b>N. Casos</b>", cell_st),
-        Paragraph("<b>% Casos</b>", cell_st),
-        Paragraph("<b>Cuantia (EUR)</b>", cell_st),
-        Paragraph("<b>% Cuantia</b>", cell_st)
-    ]
+    headers = ["Mes", "Nº Casos", "% Casos", "Cuantía (€)", "% Cuantía"]
     data = [headers]
     for i, mes_nom in enumerate(meses):
         mes = i + 1
         f = by_mes.get(mes)
-        casos   = f.num_casos if f and f.num_casos is not None else 0
+        casos   = f.num_casos   if f and f.num_casos   is not None else 0
         cuantia = float(f.cuantia or 0) if f else 0
-        pct_c  = f"{(casos / total_casos * 100):.1f}%" if total_casos else "—"
+        pct_c  = f"{(casos   / total_casos   * 100):.1f}%" if total_casos   else "—"
         pct_q  = f"{(cuantia / total_cuantia * 100):.1f}%" if total_cuantia else "—"
         data.append([
             mes_nom.capitalize(),
-            Paragraph(str(casos) if casos else "—", num_st),
-            Paragraph(pct_c, num_st),
-            Paragraph(f"{cuantia:,.2f}" if cuantia else "—", num_st),
-            Paragraph(pct_q, num_st),
+            Paragraph(str(casos)           if casos   else "—", num_st),
+            Paragraph(pct_c,                                     num_st),
+            Paragraph(f"{cuantia:,.2f} €" if cuantia else "—",  num_st),
+            Paragraph(pct_q,                                     num_st),
         ])
-
+    # Totals row
     data.append([
-        Paragraph("<b>TOTAL</b>", cell_st),
-        Paragraph(f"<b>{total_casos}</b>", num_st),
+        "TOTAL",
+        Paragraph(f"<b>{total_casos}</b>",           num_st),
         Paragraph("<b>100%</b>" if total_casos else "—", num_st),
-        Paragraph(f"<b>{total_cuantia:,.2f}</b>", num_st),
+        Paragraph(f"<b>{total_cuantia:,.2f} €</b>", num_st),
         Paragraph("<b>100%</b>" if total_cuantia else "—", num_st),
     ])
 
-    col_w = [3.5*cm, 2.5*cm, 2.5*cm, 4.5*cm, 2.5*cm]
-    n_rows = len(data)
+    col_w = [3.5*cm, 2.5*cm, 2.5*cm, 4.5*cm, 2.5*cm] # Total 15.5cm fits in 17cm frame
     tabla = Table(data, colWidths=col_w, repeatRows=1)
+    n_rows = len(data)
     tabla.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (-1, 0), azul),
         ("TEXTCOLOR",     (0, 0), (-1, 0), colors.white),
         ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE",      (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING",    (0, 0), (-1, 0), 8),
+        ("FONTSIZE",      (0, 1), (-1, -1), 8),
         ("ROWBACKGROUNDS",(0, 1), (-1, n_rows-2), [colors.white, claro]),
+        ("BACKGROUND",    (0, n_rows-1), (-1, n_rows-1), colors.HexColor("#e8f5e9")),
+        ("TEXTCOLOR",     (0, n_rows-1), (-1, n_rows-1), verde),
+        ("FONTNAME",      (0, n_rows-1), (-1, n_rows-1), "Helvetica-Bold"),
         ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#d0d7de")),
         ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN",         (0, 0), (0, -1), "LEFT"),
+        ("PADDING",       (0, 1), (-1, -1), 5),
     ]))
     story.append(tabla)
 
