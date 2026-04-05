@@ -4,7 +4,7 @@
 set -e
 
 echo "=========================================="
-echo "  APBApp — Arranque"
+echo "  SocialApp — Arranque"
 echo "=========================================="
 echo "PORT asignado: ${PORT:-NO DEFINIDO}"
 echo "DATABASE_URL presente: $(if [ -n \"$DATABASE_URL\" ]; then echo SI; else echo NO; fi)"

@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — Lógica del frontend de APBApp
+   app.js — Lógica del frontend de SocialApp
    ============================================================ */
 
 'use strict';
@@ -41,16 +41,6 @@ const I18N = {
     btn_pdf:       '<span>📊</span> Generar Informe PDF',
     pdf_activos:   '📋 Todos los casos activos',
     pdf_renov:     '📅 Renovación del mes actual',
-    itab_usuarios:  '👥 Usuarios',
-    itab_facturas:  '📄 Facturas',
-    itab_comisiones: '📋 Comisiones',
-    th_mes:        'Mes',
-    th_anio:       'Año',
-    th_cuantia:    'Cuantía',
-    th_fecha:      'Fecha',
-    th_num_exp:    'Expediente',
-    empty_facturas: 'No hay facturas registradas',
-    empty_comisiones: 'No hay comisiones registradas',
     btn_nuevo:     '<span>✦</span> Nuevo caso',
     lbl_apellidos: 'Apellidos <span class="req">*</span>',
     lbl_nombre:    'Nombre <span class="req">*</span>',
@@ -133,16 +123,6 @@ const I18N = {
     btn_pdf:       '<span>📊</span> Generar Informe PDF',
     pdf_activos:   '📋 Tots els casos actius',
     pdf_renov:     '📅 Renovació del mes actual',
-    itab_usuarios:  '👥 Usuaris',
-    itab_facturas:  '📄 Factures',
-    itab_comisiones: '📋 Comissions',
-    th_mes:        'Mes',
-    th_anio:       'Any',
-    th_cuantia:    'Quantia',
-    th_fecha:      'Data',
-    th_num_exp:    'Expedient',
-    empty_facturas: 'No hi ha factures registrades',
-    empty_comisiones: 'No hi ha comissions registrades',
     btn_nuevo:     '<span>✦</span> Nou cas',
     lbl_apellidos: 'Cognoms <span class="req">*</span>',
     lbl_nombre:    'Nom <span class="req">*</span>',
@@ -224,33 +204,18 @@ function applyI18n() {
 const state = {
   casos: [],
   editingId: null,
-  token: localStorage.getItem('apbapp_token'),
-  deptName: localStorage.getItem('apbapp_dept'),
+  token: localStorage.getItem('socialapp_token'),
+  deptName: localStorage.getItem('socialapp_dept'),
   sortBy:  'nombre',
   sortDir: 'asc',
   filterZona: null,
   sipSearch: '',
-  lang: localStorage.getItem('apbapp_lang') || 'es',
-  innerTab: 'usuarios',
+  lang: localStorage.getItem('socialapp_lang') || 'es',
 };
 
 // ── Utilidades ────────────────────────────────────────────────
 
 function g(id) { return document.getElementById(id); }
-
-function switchInnerTab(tabName) {
-  state.innerTab = tabName;
-  document.querySelectorAll('.inner-tab').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.itab === tabName);
-  });
-  document.querySelectorAll('.inner-tab-panel').forEach(panel => {
-    panel.classList.toggle('hidden', panel.id !== `itab-${tabName}`);
-  });
-  // Load specialized data if needed
-  if (tabName === 'usuarios') cargarCasos();
-  else if (tabName === 'facturas') cargarFacturas();
-  else if (tabName === 'comisiones') cargarComisiones();
-}
 
 async function api(method, path, body = null) {
   const headers = { 'Content-Type': 'application/json' };
@@ -327,8 +292,8 @@ async function onLoginSubmit(e) {
     const data = await api('POST', '/auth/login', { username: user, password: pass });
     state.token = data.access_token;
     state.deptName = data.dept_name;
-    localStorage.setItem('apbapp_token', data.access_token);
-    localStorage.setItem('apbapp_dept', data.dept_name);
+    localStorage.setItem('socialapp_token', data.access_token);
+    localStorage.setItem('socialapp_dept', data.dept_name);
     initApp();
     toast(`${t('welcome')} ${state.deptName}`, 'success');
   } catch (err) {
@@ -342,8 +307,8 @@ async function onLoginSubmit(e) {
 function logout() {
   state.token = null;
   state.deptName = null;
-  localStorage.removeItem('apbapp_token');
-  localStorage.removeItem('apbapp_dept');
+  localStorage.removeItem('socialapp_token');
+  localStorage.removeItem('socialapp_dept');
   g('main-app').classList.add('hidden');
   g('login-screen').classList.remove('hidden');
   g('login-form').reset();
@@ -534,13 +499,13 @@ function renderTabla() {
 // ── Tema claro/oscuro ─────────────────────────────────────────
 
 function initTheme() {
-  const saved = localStorage.getItem('apbapp_theme') || 'dark';
+  const saved = localStorage.getItem('socialapp_theme') || 'dark';
   applyTheme(saved);
 }
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('apbapp_theme', theme);
+  localStorage.setItem('socialapp_theme', theme);
   const btn = g('btn-theme');
   if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
 }
@@ -554,7 +519,7 @@ function toggleTheme() {
 
 function toggleLang() {
   state.lang = state.lang === 'es' ? 'val' : 'es';
-  localStorage.setItem('apbapp_lang', state.lang);
+  localStorage.setItem('socialapp_lang', state.lang);
   applyI18n();
   // Refresh entire UI
   renderTabla();
@@ -734,13 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
   g('btn-logout').addEventListener('click', logout);
   g('btn-theme').addEventListener('click', toggleTheme);
   g('btn-lang').addEventListener('click', toggleLang);
-
-  // Inner tabs switching
-  document.querySelectorAll('.inner-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      switchInnerTab(btn.dataset.itab);
-    });
-  });
 
   g('toggle-pwd').addEventListener('click', () => {
     const input = g('login-pass');
