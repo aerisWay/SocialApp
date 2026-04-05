@@ -516,6 +516,7 @@ async function cargarFacturas() {
   try {
     state.facturas = await api('GET', `/mayor-a-casa/facturas/?anio=${state.facturasAnio}`);
     renderFacturas();
+    renderStatsFacturas();
   } catch {
     toast(t('toast_load_err'), 'error');
   }
@@ -576,6 +577,9 @@ function renderStatsComisiones() {
   if (state.filterComisionZona !== null) {
     list = list.filter(c => c.zona === state.filterComisionZona);
   }
+  if (state.filterComisionMes) {
+    list = list.filter(c => c.mes_comision === state.filterComisionMes);
+  }
   const total     = list.length;
   const tramite   = list.filter(c => c.estado === 'en_tramite').length;
   const aprobadas = list.filter(c => c.estado === 'aprobado').length;
@@ -587,6 +591,17 @@ function renderStatsComisiones() {
   if (g('stat-com-denegadas')) g('stat-com-denegadas').textContent = denegadas;
 }
 
+// ── Estadísticas Facturas ─────────────────────────────────────
+
+function renderStatsFacturas() {
+  const list = state.facturas || [];
+  const totalCasos   = list.reduce((acc, f) => acc + (f.num_casos || 0), 0);
+  const totalCuantia = list.reduce((acc, f) => acc + (f.cuantia || 0), 0);
+
+  if (g('stat-fact-casos'))   g('stat-fact-casos').textContent   = totalCasos;
+  if (g('stat-fact-cuantia')) g('stat-fact-cuantia').textContent = totalCuantia.toFixed(2) + ' €';
+}
+
 // ── Gráfico de distribución por edad ─────────────────────────
 
 function renderPieChart() {
@@ -595,72 +610,70 @@ function renderPieChart() {
   if (!canvas) return;
 
   let list = [...state.casos];
-  if (state.filterZona !== null) {
-    list = list.filter(c => c.zona === state.filterZona);
-  }
+  if (state.filterZona !== null) list = list.filter(c => c.zona === state.filterZona);
 
   const data = [
-    { key: 'menor_60', label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
-    { key: '60_65',    label: t('opt_60_65'),    color: '#6366f1', count: list.filter(c => c.rango_edad === '60_65').length    },
-    { key: 'mayor_65', label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
-    { key: 'nd',       label: 'N/D',             color: '#374151', count: list.filter(c => !c.rango_edad).length              },
+    { label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
+    { label: t('opt_60_65'),    color: '#6366f1', count: list.filter(c => c.rango_edad === '60_65').length    },
+    { label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
+    { label: 'N/D',             color: '#374151', count: list.filter(c => !c.rango_edad).length              },
   ];
+  _drawDonut(canvas, legend, data, list.length);
+}
 
-  const total = list.length;
+function renderPieChartCom() {
+  const canvas = g('chart-edad-com');
+  const legend = g('chart-legend-com');
+  if (!canvas) return;
+
+  let list = [...state.comisiones];
+  if (state.filterComisionZona !== null) list = list.filter(c => c.zona === state.filterComisionZona);
+  if (state.filterComisionMes)           list = list.filter(c => c.mes_comision === state.filterComisionMes);
+
+  const data = [
+    { label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
+    { label: t('opt_60_65'),    color: '#6366f1', count: list.filter(c => c.rango_edad === '60_65').length    },
+    { label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
+    { label: 'N/D',             color: '#374151', count: list.filter(c => !c.rango_edad).length              },
+  ];
+  _drawDonut(canvas, legend, data, list.length);
+}
+
+function _drawDonut(canvas, legend, data, total) {
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-
-  const cx = w / 2, cy = h / 2;
-  const r = Math.min(w, h) / 2 - 4;
-  const innerR = r * 0.55;
+  const cx = w/2, cy = h/2, r = Math.min(w,h)/2-4, innerR = r*0.55;
 
   if (total === 0) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-    ctx.fillStyle = '#2d3a4d';
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+    ctx.fillStyle = '#2d3a4d'; ctx.fill();
   } else {
-    let angle = -Math.PI / 2;
+    let angle = -Math.PI/2;
     data.forEach(d => {
       if (d.count === 0) return;
       const slice = (d.count / total) * 2 * Math.PI;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, angle, angle + slice);
-      ctx.closePath();
-      ctx.fillStyle = d.color;
-      ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, angle, angle + slice); ctx.closePath();
+      ctx.fillStyle = d.color; ctx.fill();
       angle += slice;
     });
   }
-
-  // Donut hole
-  ctx.beginPath();
-  ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+  ctx.beginPath(); ctx.arc(cx, cy, innerR, 0, 2*Math.PI);
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-  ctx.fillStyle = isDark ? '#18212f' : '#ffffff';
-  ctx.fill();
-
-  // Center label
+  ctx.fillStyle = isDark ? '#18212f' : '#ffffff'; ctx.fill();
   ctx.fillStyle = isDark ? '#e8eef5' : '#111827';
-  ctx.font = `bold ${Math.round(r * 0.38)}px Inter, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${Math.round(r*0.38)}px Inter,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(total), cx, cy);
 
-  // Legend
   if (legend) {
-    legend.innerHTML = data
-      .filter(d => d.count > 0)
-      .map(d => {
-        const pct = total ? Math.round((d.count / total) * 100) : 0;
-        return `<div class="legend-item">
-          <span class="legend-dot" style="background:${d.color}"></span>
-          <span class="legend-label">${d.label}</span>
-          <span class="legend-val">${d.count} <em>${pct}%</em></span>
-        </div>`;
-      }).join('');
+    legend.innerHTML = data.filter(d => d.count > 0).map(d => {
+      const pct = total ? Math.round((d.count / total) * 100) : 0;
+      return `<div class="legend-item">
+        <span class="legend-dot" style="background:${d.color}"></span>
+        <span class="legend-label">${d.label}</span>
+        <span class="legend-val">${d.count} <em>${pct}%</em></span>
+      </div>`;
+    }).join('');
   }
 }
 
@@ -869,7 +882,8 @@ function initFacturasAnio() {
   if (!sel) return;
   const cur = new Date().getFullYear();
   sel.innerHTML = '';
-  for (let y = cur; y >= cur - 4; y--) {
+  // Mostrar 2 años futuros y 4 pasados
+  for (let y = cur + 2; y >= cur - 4; y--) {
     const opt = document.createElement('option');
     opt.value = y; opt.textContent = y;
     if (y === state.facturasAnio) opt.selected = true;
@@ -1314,6 +1328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.filterComisionZona = btn.dataset.zonaC === '' ? null : parseInt(btn.dataset.zonaC);
     renderComisiones();
     renderStatsComisiones();
+    renderPieChartCom();
   });
 
   // SIP search (Usuarios)
@@ -1326,6 +1341,7 @@ document.addEventListener('DOMContentLoaded', () => {
   g('sip-search-comision').addEventListener('input', e => {
     state.sipSearchComision = e.target.value.trim();
     renderComisiones();
+    renderPieChartCom();
   });
 
   // Mes filter (Comisiones)
@@ -1333,6 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.filterComisionMes = e.target.value || null;
     renderComisiones();
     renderStatsComisiones();
+    renderPieChartCom();
   });
 
   // Sort buttons

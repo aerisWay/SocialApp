@@ -210,6 +210,12 @@
             </div>
           </div>
 
+          <!-- Resumen de facturas -->
+          <div class="stats-row stats-facturas">
+            <div class="stat-card card-indigo"><span class="stat-icon">📈</span><div class="stat-value" id="stat-fact-casos">—</div><div class="stat-label">Total casos anual</div></div>
+            <div class="stat-card card-green" ><span class="stat-icon">💶</span><div class="stat-value success" id="stat-fact-cuantia">—</div><div class="stat-label">Cuantía total anual</div></div>
+          </div>
+
           <div class="table-wrapper">
             <table class="data-table facturas-table">
               <thead>
@@ -243,6 +249,17 @@
             <div class="stat-card card-cyan"  ><span class="stat-icon">⏳</span><div class="stat-value accent" id="stat-com-tramite">—</div><div class="stat-label" data-i18n="stat_tramite">En trámite</div></div>
             <div class="stat-card card-green" ><span class="stat-icon">✅</span><div class="stat-value success" id="stat-com-aprobadas">—</div><div class="stat-label" data-i18n="stat_aprobadas">Aprobadas</div></div>
             <div class="stat-card card-gray"  ><span class="stat-icon">✗</span><div class="stat-value muted" id="stat-com-denegadas">—</div><div class="stat-label" data-i18n="stat_denegadas">Denegadas</div></div>
+          </div>
+
+          <!-- Gráfico comisiones -->
+          <div class="chart-row chart-comisiones">
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_edad_title">Distribución por edad</div>
+              <div class="chart-inner">
+                <canvas id="chart-edad-com" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend-com"></div>
+              </div>
+            </div>
           </div>
 
           <!-- Barra de herramientas comisiones -->
