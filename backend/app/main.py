@@ -83,6 +83,17 @@ async def lifespan(_app: FastAPI):
                     ))
                     _db.commit()
 
+                # Migration for Comisiones table: add mes_comision
+                if "comisiones_mayor_a_casa" in inspector.get_table_names():
+                    com_cols = [c["name"] for c in inspector.get_columns("comisiones_mayor_a_casa")]
+                    if "mes_comision" not in com_cols:
+                        _db.execute(text(
+                            "ALTER TABLE comisiones_mayor_a_casa "
+                            "ADD COLUMN IF NOT EXISTS mes_comision VARCHAR(7)"
+                        ))
+                        _db.commit()
+                        print("\u2705 Columna 'mes_comision' añadida a comisiones_mayor_a_casa")
+
                 print("\u2705 Migraciones verificadas")
         except Exception as e:
             _db.rollback()
