@@ -147,6 +147,7 @@ a { color: var(--accent); }
 .sub-tab.coming-soon {
   opacity: 0.4;
   cursor: not-allowed;
+  pointer-events: none;
 }
 /* Tooltip en tabs desactivados */
 .sub-tab.coming-soon[data-tip]:hover::after {
