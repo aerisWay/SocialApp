@@ -149,30 +149,25 @@ const I18N = {
     comision_total: 'Total comissions',
     stat_tramite:   'En tràmit',
     stat_aprobadas: 'Aprovades',
-    stat_denegadas: 'Denegades',
-    chart_edad_title: 'Distribució per edat',
-    lbl_zona:      'Zona:',
-    lbl_mes:       'Mes:',
-    btn_quitar_pdf: 'Eliminar PDF',
-    confirm_quitar_pdf: 'Segur que vols eliminar el PDF adjunt?',
-    toast_pdf_deleted: 'PDF eliminat correctament',
-    zona_todas:    'Totes',
-    lbl_ordenar:   'Ordenar:',
-    sort_nombre:   'Nom',
-    sort_renov:    'Renovació',
-    sort_alta:     'Alta',
-    sort_estado:   'Estat',
+    app_name:          'APBApp',
+    itab_usuarios:     'Usuaris',
+    itab_facturas:     'Factures',
+    itab_comisiones:   'Comissions',
+    btn_nuevo:         '+ Nou Cas',
+    btn_nuevo_comision: '+ Nova Comissió',
+    lbl_zona:          'Zona:',
+    lbl_mes:           'Mes:',
+    zona_todas:        'Totes',
     sip_search_placeholder: 'Buscar per SIP…',
-    th_nombre:     'Cognoms, Nom',
-    th_zona:       'Zona',
-    th_edad:       'Edat',
-    th_sexo:       'Sexe',
-    th_telefono:   'Telèfon',
-    th_renov:      'Mes Renov.',
-    th_alta:       "Data d'Alta",
-    th_estado:     'Estat',
+    th_nombre:        'Cognoms, Nom',
+    th_zona:          'Zona',
+    th_edad:          'Edat',
+    th_sexo:          'Sexe',
+    th_telefono:      'Telèfon',
+    th_renov:         'Mes Renov.',
+    th_alta:          'F. Alta',
+    th_estado:        'Estat',
     th_estado_comision: 'Estat',
-    th_acciones:   'Accions',
     loading:       'Carregant casos…',
     btn_pdf:       '<span>📊</span> Generar Informe PDF',
     pdf_activos:   '📋 Tots els casos actius',
@@ -453,7 +448,7 @@ async function cargarCasos() {
   state.casos = await api('GET', '/mayor-a-casa/casos/');
   renderTabla();
   renderStats();
-  renderPieChart();
+  renderStats();
 }
 
 async function crearCaso(datos) {
@@ -522,6 +517,20 @@ async function cargarFacturas() {
   }
 }
 
+function renderStatsFacturas() {
+  const inputs = document.querySelectorAll('.factura-input');
+  let totalCasos = 0;
+  let totalCuantia = 0;
+  inputs.forEach(input => {
+    const val = parseFloat(input.value) || 0;
+    if (input.dataset.field === 'num_casos') totalCasos += val;
+    else if (input.dataset.field === 'cuantia') totalCuantia += val;
+  });
+
+  if (g('stat-fact-casos'))   g('stat-fact-casos').textContent   = totalCasos;
+  if (g('stat-fact-cuantia')) g('stat-fact-cuantia').textContent = totalCuantia.toFixed(2) + ' €';
+}
+
 async function guardarFactura(anio, mes, datos) {
   try {
     const result = await api('PUT', '/mayor-a-casa/facturas/', { anio, mes, ...datos });
@@ -551,92 +560,61 @@ async function subirPdfFactura(facturaId, file) {
 
 function renderStats() {
   let list = [...state.casos];
-  if (state.filterZona !== null) {
-    list = list.filter(c => c.zona === state.filterZona);
-  }
-  const total   = list.length;
+  if (state.filterZona !== null) list = list.filter(c => c.zona === state.filterZona);
+  
+  // Chart 1: Estado (Activos / Bajas)
+  const total = list.length;
   const activos = list.filter(c => c.activo).length;
-  const bajas   = total - activos;
-  const zonas   = new Set(list.map(c => c.zona).filter(Boolean)).size;
-  const hombres = list.filter(c => c.sexo === 'hombre').length;
-  const mujeres = list.filter(c => c.sexo === 'mujer').length;
+  const bajas = total - activos;
+  _drawDonut(g('chart-estado'), g('chart-legend-estado'), [
+    { label: t('badge_activo'), color: 'var(--success)', count: activos },
+    { label: t('badge_baja'),   color: 'var(--text-3)',  count: bajas }
+  ], total);
 
-  const el = id => g(id);
-  if (el('stat-total'))   el('stat-total').textContent   = total;
-  if (el('stat-activos')) el('stat-activos').textContent = activos;
-  if (el('stat-bajas'))   el('stat-bajas').textContent   = bajas;
-  if (el('stat-zonas'))   el('stat-zonas').textContent   = zonas;
-  if (el('stat-hombres')) el('stat-hombres').textContent = hombres;
-  if (el('stat-mujeres')) el('stat-mujeres').textContent = mujeres;
+  // Chart 2: Sexo
+  _drawDonut(g('chart-sexo'), g('chart-legend-sexo'), [
+    { label: t('sex_hombre'),    color: '#6366f1', count: list.filter(c => c.sexo === 'hombre').length },
+    { label: t('sex_mujer'),     color: '#f43f5e', count: list.filter(c => c.sexo === 'mujer').length },
+    { label: t('sex_no_define'), color: '#94a3b8', count: list.filter(c => c.sexo === 'no_define' || !c.sexo).length }
+  ], total);
+
+  // Chart 3: Edad
+  _drawDonut(g('chart-edad'), g('chart-legend-edad'), [
+    { label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
+    { label: t('opt_60_65'),    color: '#3b82f6', count: list.filter(c => c.rango_edad === '60_65').length },
+    { label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
+    { label: 'N/D',             color: '#334155', count: list.filter(c => !c.rango_edad).length }
+  ], total);
 }
-
-// ── Estadísticas Comisiones ───────────────────────────────────
 
 function renderStatsComisiones() {
   let list = [...state.comisiones];
-  if (state.filterComisionZona !== null) {
-    list = list.filter(c => c.zona === state.filterComisionZona);
-  }
-  if (state.filterComisionMes) {
-    list = list.filter(c => c.mes_comision === state.filterComisionMes);
-  }
-  const total     = list.length;
-  const tramite   = list.filter(c => c.estado === 'en_tramite').length;
-  const aprobadas = list.filter(c => c.estado === 'aprobado').length;
-  const denegadas = list.filter(c => c.estado === 'denegado').length;
-
-  if (g('stat-com-total'))     g('stat-com-total').textContent     = total;
-  if (g('stat-com-tramite'))   g('stat-com-tramite').textContent   = tramite;
-  if (g('stat-com-aprobadas')) g('stat-com-aprobadas').textContent = aprobadas;
-  if (g('stat-com-denegadas')) g('stat-com-denegadas').textContent = denegadas;
-}
-
-// ── Estadísticas Facturas ─────────────────────────────────────
-
-function renderStatsFacturas() {
-  const list = state.facturas || [];
-  const totalCasos   = list.reduce((acc, f) => acc + (f.num_casos || 0), 0);
-  const totalCuantia = list.reduce((acc, f) => acc + (f.cuantia || 0), 0);
-
-  if (g('stat-fact-casos'))   g('stat-fact-casos').textContent   = totalCasos;
-  if (g('stat-fact-cuantia')) g('stat-fact-cuantia').textContent = totalCuantia.toFixed(2) + ' €';
-}
-
-// ── Gráfico de distribución por edad ─────────────────────────
-
-function renderPieChart() {
-  const canvas = g('chart-edad');
-  const legend = g('chart-legend');
-  if (!canvas) return;
-
-  let list = [...state.casos];
-  if (state.filterZona !== null) list = list.filter(c => c.zona === state.filterZona);
-
-  const data = [
-    { label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
-    { label: t('opt_60_65'),    color: '#6366f1', count: list.filter(c => c.rango_edad === '60_65').length    },
-    { label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
-    { label: 'N/D',             color: '#374151', count: list.filter(c => !c.rango_edad).length              },
-  ];
-  _drawDonut(canvas, legend, data, list.length);
-}
-
-function renderPieChartCom() {
-  const canvas = g('chart-edad-com');
-  const legend = g('chart-legend-com');
-  if (!canvas) return;
-
-  let list = [...state.comisiones];
   if (state.filterComisionZona !== null) list = list.filter(c => c.zona === state.filterComisionZona);
   if (state.filterComisionMes)           list = list.filter(c => c.mes_comision === state.filterComisionMes);
+  
+  const total = list.length;
 
-  const data = [
+  // Chart 1: Estado de Tramitación
+  _drawDonut(g('chart-estado-com'), g('chart-legend-estado-com'), [
+    { label: t('badge_tramite'),  color: '#f59e0b', count: list.filter(c => c.estado === 'en_tramite').length },
+    { label: t('badge_aprobado'), color: '#10b981', count: list.filter(c => c.estado === 'aprobado').length },
+    { label: t('badge_denegado'), color: '#ef4444', count: list.filter(c => c.estado === 'denegado').length }
+  ], total);
+
+  // Chart 2: Sexo
+  _drawDonut(g('chart-sexo-com'), g('chart-legend-sexo-com'), [
+    { label: t('sex_hombre'),    color: '#6366f1', count: list.filter(c => c.sexo === 'hombre').length },
+    { label: t('sex_mujer'),     color: '#f43f5e', count: list.filter(c => c.sexo === 'mujer').length },
+    { label: t('sex_no_define'), color: '#94a3b8', count: list.filter(c => c.sexo === 'no_define' || !c.sexo).length }
+  ], total);
+
+  // Chart 3: Edad
+  _drawDonut(g('chart-edad-com'), g('chart-legend-edad-com'), [
     { label: t('opt_menor_60'), color: '#f59e0b', count: list.filter(c => c.rango_edad === 'menor_60').length },
-    { label: t('opt_60_65'),    color: '#6366f1', count: list.filter(c => c.rango_edad === '60_65').length    },
+    { label: t('opt_60_65'),    color: '#3b82f6', count: list.filter(c => c.rango_edad === '60_65').length },
     { label: t('opt_mayor_65'), color: '#06b6d4', count: list.filter(c => c.rango_edad === 'mayor_65').length },
-    { label: 'N/D',             color: '#374151', count: list.filter(c => !c.rango_edad).length              },
-  ];
-  _drawDonut(canvas, legend, data, list.length);
+    { label: 'N/D',             color: '#334155', count: list.filter(c => !c.rango_edad).length }
+  ], total);
 }
 
 function _drawDonut(canvas, legend, data, total) {
@@ -939,8 +917,12 @@ function renderFacturas() {
       </tr>`;
   }).join('');
 
-  // Guardar al cambiar valor
+  // Refresco del resumen en tiempo real al escribir
   tbody.querySelectorAll('.factura-input').forEach(input => {
+    input.addEventListener('input', () => {
+      renderStatsFacturas();
+    });
+
     input.addEventListener('change', async e => {
       const { anio: a, mes: m, field } = e.target.dataset;
       const raw = e.target.value;
@@ -1002,7 +984,7 @@ function applyTheme(theme) {
   localStorage.setItem('apbapp_theme', theme);
   const btn = g('btn-theme');
   if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
-  renderPieChart(); // re-render with correct background color
+  renderStats(); // re-render with correct background color
 }
 
 function toggleTheme() {
@@ -1017,7 +999,7 @@ function toggleLang() {
   applyI18n();
   renderTabla();
   renderStats();
-  renderPieChart();
+  renderStats();
   renderComisiones();
   renderStatsComisiones();
   renderFacturas();
@@ -1316,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.filterZona = btn.dataset.zona === '' ? null : parseInt(btn.dataset.zona);
     renderTabla();
     renderStats();
-    renderPieChart();
+    renderStats();
   });
 
   // Zona filters (Comisiones)
@@ -1328,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.filterComisionZona = btn.dataset.zonaC === '' ? null : parseInt(btn.dataset.zonaC);
     renderComisiones();
     renderStatsComisiones();
-    renderPieChartCom();
+    renderStatsComisiones();
   });
 
   // SIP search (Usuarios)
@@ -1341,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', () => {
   g('sip-search-comision').addEventListener('input', e => {
     state.sipSearchComision = e.target.value.trim();
     renderComisiones();
-    renderPieChartCom();
+    renderStatsComisiones();
   });
 
   // Mes filter (Comisiones)
@@ -1349,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.filterComisionMes = e.target.value || null;
     renderComisiones();
     renderStatsComisiones();
-    renderPieChartCom();
+    renderStatsComisiones();
   });
 
   // Sort buttons

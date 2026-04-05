@@ -121,23 +121,27 @@
             </div>
           </div>
 
-          <!-- Estadísticas -->
-          <div class="stats-row">
-            <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label" data-i18n="stat_total">Total casos</div></div>
-            <div class="stat-card card-green" ><span class="stat-icon">✅</span><div class="stat-value success" id="stat-activos">—</div><div class="stat-label" data-i18n="stat_activos">Activos</div></div>
-            <div class="stat-card card-gray"  ><span class="stat-icon">📁</span><div class="stat-value muted"   id="stat-bajas">—</div><div class="stat-label" data-i18n="stat_bajas">Dados de baja</div></div>
-            <div class="stat-card card-cyan"  ><span class="stat-icon">📍</span><div class="stat-value accent"  id="stat-zonas">—</div><div class="stat-label" data-i18n="stat_zonas">Zonas con casos</div></div>
-            <div class="stat-card card-amber" ><span class="stat-icon">👨</span><div class="stat-value" id="stat-hombres">—</div><div class="stat-label" data-i18n="stat_hombres">Hombres</div></div>
-            <div class="stat-card card-purple"><span class="stat-icon">👩</span><div class="stat-value" id="stat-mujeres">—</div><div class="stat-label" data-i18n="stat_mujeres">Mujeres</div></div>
-          </div>
-
-          <!-- Gráfico de distribución por edad -->
-          <div class="chart-row">
+          <!-- Resumen de usuarios (3 Gráficos) -->
+          <div class="chart-row stats-usuarios">
             <div class="chart-card">
-              <div class="chart-title" data-i18n="chart_edad_title">Distribución por edad</div>
+              <div class="chart-title" data-i18n="chart_estado_title">Estado (Activos / Bajas)</div>
+              <div class="chart-inner">
+                <canvas id="chart-estado" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend-estado"></div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_sexo_title">Distribución por Sexo</div>
+              <div class="chart-inner">
+                <canvas id="chart-sexo" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend-sexo"></div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_edad_title">Distribución por Edad</div>
               <div class="chart-inner">
                 <canvas id="chart-edad" width="140" height="140"></canvas>
-                <div class="chart-legend" id="chart-legend"></div>
+                <div class="chart-legend" id="chart-legend-edad"></div>
               </div>
             </div>
           </div>
@@ -243,21 +247,27 @@
             </button>
           </div>
 
-          <!-- Estadísticas de comisiones -->
-          <div class="stats-row stats-comisiones">
-            <div class="stat-card card-indigo"><span class="stat-icon">📋</span><div class="stat-value" id="stat-com-total">—</div><div class="stat-label" data-i18n="comision_total">Total comisiones</div></div>
-            <div class="stat-card card-cyan"  ><span class="stat-icon">⏳</span><div class="stat-value accent" id="stat-com-tramite">—</div><div class="stat-label" data-i18n="stat_tramite">En trámite</div></div>
-            <div class="stat-card card-green" ><span class="stat-icon">✅</span><div class="stat-value success" id="stat-com-aprobadas">—</div><div class="stat-label" data-i18n="stat_aprobadas">Aprobadas</div></div>
-            <div class="stat-card card-gray"  ><span class="stat-icon">✗</span><div class="stat-value muted" id="stat-com-denegadas">—</div><div class="stat-label" data-i18n="stat_denegadas">Denegadas</div></div>
-          </div>
-
-          <!-- Gráfico comisiones -->
-          <div class="chart-row chart-comisiones">
+          <!-- Resumen de comisiones (3 Gráficos) -->
+          <div class="chart-row stats-comisiones">
             <div class="chart-card">
-              <div class="chart-title" data-i18n="chart_edad_title">Distribución por edad</div>
+              <div class="chart-title" data-i18n="chart_estado_com_title">Estado de Tramitación</div>
+              <div class="chart-inner">
+                <canvas id="chart-estado-com" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend-estado-com"></div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_sexo_title">Distribución por Sexo</div>
+              <div class="chart-inner">
+                <canvas id="chart-sexo-com" width="140" height="140"></canvas>
+                <div class="chart-legend" id="chart-legend-sexo-com"></div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title" data-i18n="chart_edad_title">Distribución por Edad</div>
               <div class="chart-inner">
                 <canvas id="chart-edad-com" width="140" height="140"></canvas>
-                <div class="chart-legend" id="chart-legend-com"></div>
+                <div class="chart-legend" id="chart-legend-edad-com"></div>
               </div>
             </div>
           </div>
