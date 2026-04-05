@@ -241,8 +241,8 @@ def _build_pdf_facturas(facturas: list, anio: int, lang: str = "es") -> bytes:
 
     # Build lookup: mes → factura
     by_mes = {f.mes: f for f in facturas}
-    total_casos   = sum(f.num_casos   or 0 for f in facturas)
-    total_cuantia = sum(float(f.cuantia or 0) for f in facturas)
+    total_casos   = sum((f.num_casos or 0) for f in facturas)
+    total_cuantia = float(sum((f.cuantia or 0) for f in facturas)) or 0.0
 
     story = [
         Paragraph(f"Major a Casa — Facturación {anio}", title_st),
@@ -281,7 +281,7 @@ def _build_pdf_facturas(facturas: list, anio: int, lang: str = "es") -> bytes:
         Paragraph("<b>100%</b>" if total_cuantia else "—", num_st),
     ])
 
-    col_w = [4*cm, 3*cm, 3*cm, 4.5*cm, 3*cm]
+    col_w = [3.5*cm, 2.5*cm, 2.5*cm, 4.5*cm, 2.5*cm] # Total 15.5cm fits in 17cm frame
     tabla = Table(data, colWidths=col_w, repeatRows=1)
     n_rows = len(data)
     tabla.setStyle(TableStyle([
@@ -385,7 +385,7 @@ def _build_pdf_comisiones(comisiones: list, lang: str = "es",
         for c in comisiones
     ]
 
-    col_w = [3.2*cm, 2.4*cm, 2.2*cm, 2*cm, 1.4*cm, 1.4*cm, 1.6*cm, 2.2*cm, None]
+    col_w = [3*cm, 2*cm, 2.2*cm, 2*cm, 1.4*cm, 1.4*cm, 1.6*cm, 2.2*cm, 2*cm] # Reduced for landscape
     tabla = Table(data, colWidths=col_w, repeatRows=1)
     tabla.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (-1, 0), azul),
@@ -492,7 +492,7 @@ def _build_pdf_seguimiento(rows: list, tipo: str, anio: int, lang: str = "es") -
         Paragraph(f"<b>{pct_mt}</b>",  num_st),
     ])
 
-    col_w = [4*cm, 3*cm, 2.8*cm, 2.8*cm, 2.8*cm, 2.8*cm]
+    col_w = [3.5*cm, 2.5*cm, 2.3*cm, 2.3*cm, 2.3*cm, 2.3*cm] # Total 15.2cm
     n     = len(data)
     tabla = Table(data, colWidths=col_w, repeatRows=1)
     tabla.setStyle(TableStyle([
