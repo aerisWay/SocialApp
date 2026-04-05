@@ -294,8 +294,11 @@ const I18N = {
     doc_th_titulo:     'Títol',
     doc_lbl_titulo:    'Títol',
     btn_nuevo_doc:     '<span>✦</span> Nou document',
+    btn_quitar_pdf:    'Eliminar PDF',
+    confirm_quitar_pdf: 'Segur que vols eliminar el PDF adjunt?',
     toast_doc_saved:   'Document guardat',
     toast_doc_deleted: 'Document eliminat',
+    toast_pdf_deleted: 'PDF eliminat correctament',
     confirm_del_doc:   'Eliminar el document',
   },
 };
@@ -755,6 +758,11 @@ async function subirPdfDoc(docId, file) {
   return res.json();
 }
 
+async function eliminarPdfDoc(id) {
+  await api('DELETE', `/mayor-a-casa/documentacion/${id}/pdf`);
+  await cargarDocs();
+}
+
 function renderDocs() {
   const tbody = g('tbody-docs');
   if (!tbody) return;
@@ -769,6 +777,7 @@ function renderDocs() {
         ${doc.pdf_filename
           ? `<div class="pdf-btn-group">
                <a class="btn btn-ghost btn-sm" href="/static/uploads/documentacion/${doc.pdf_filename}" target="_blank">📄 ${t('btn_ver_pdf')}</a>
+               <button class="btn btn-ghost btn-sm delete-doc-pdf-btn" data-id="${doc.id}" title="${t('btn_quitar_pdf')}">🗑️</button>
              </div>`
           : ''}
         <label class="btn btn-ghost btn-sm upload-label">
@@ -781,6 +790,17 @@ function renderDocs() {
       </td>
     </tr>
   `).join('');
+
+  tbody.querySelectorAll('.delete-doc-pdf-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm(t('confirm_quitar_pdf'))) {
+        try {
+          await eliminarPdfDoc(parseInt(btn.dataset.id));
+          toast(t('toast_pdf_deleted'), 'info');
+        } catch (err) { toast(err.message, 'error'); }
+      }
+    });
+  });
 
   tbody.querySelectorAll('.doc-titulo-input').forEach(input => {
     input.addEventListener('change', async e => {

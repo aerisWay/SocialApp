@@ -990,3 +990,17 @@ async def upload_documentacion_pdf(
     db.commit()
     db.refresh(doc)
     return {"pdf_url": f"/static/uploads/documentacion/{filename}", "doc": DocumentacionResponse.model_validate(doc)}
+
+
+@router.delete("/documentacion/{doc_id}/pdf", status_code=204, summary="Eliminar PDF de documentación")
+def delete_documentacion_pdf(doc_id: int, db: Session = Depends(get_db)):
+    doc = db.query(DocumentacionMayorACasa).filter(DocumentacionMayorACasa.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    if doc.pdf_filename:
+        filepath = UPLOAD_DIR_DOC / doc.pdf_filename
+        if filepath.exists():
+            filepath.unlink()
+        doc.pdf_filename = None
+        db.commit()
+    return
