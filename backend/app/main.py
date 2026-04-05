@@ -205,6 +205,31 @@ async def lifespan(_app: FastAPI):
         finally:
             db2.close()
 
+        # 5. Seed de Comisiones
+        from app.models.comision_mayor_a_casa import ComisionMayorACasa
+        db3 = SessionLocal()
+        try:
+            if db3.query(ComisionMayorACasa).count() == 0:
+                _mes = _date.today().strftime("%Y-%m")
+                _SEED_COM = [
+                    dict(apellidos="Pérez Gómez",    nombre="Antonia",  dni="11111111A", sip="20000001", zona=1, sexo="mujer",  rango_edad="mayor_65", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="García Ruiz",    nombre="Manuel",   dni="22222222B", sip="20000002", zona=2, sexo="hombre", rango_edad="60_65",    estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="López Sanz",     nombre="Carmen",   dni="33333333C", sip="20000003", zona=1, sexo="mujer",  rango_edad="mayor_65", estado="denegado",   mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Sánchez Mas",    nombre="Vicente",  dni="44444444D", sip="20000004", zona=3, sexo="hombre", rango_edad="menor_60", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Marti Bel",      nombre="Rosa",     dni="55555555E", sip="20000005", zona=4, sexo="mujer",  rango_edad="mayor_65", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Torres Vila",    nombre="Josep",    dni="66666666F", sip="20000006", zona=2, sexo="hombre", rango_edad="60_65",    estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Molina Cap",     nombre="Anna",     dni="77777777G", sip="20000007", zona=1, sexo="mujer",  rango_edad="mayor_65", estado="aprobado",   mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Vila Seco",      nombre="Pere",     dni="88888888H", sip="20000008", zona=3, sexo="hombre", rango_edad="mayor_65", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Roca Font",      nombre="Teresa",   dni="99999999J", sip="20000009", zona=4, sexo="mujer",  rango_edad="60_65",    estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    dict(apellidos="Soler Pau",      nombre="Joan",     dni="00000000K", sip="20000010", zona=2, sexo="hombre", rango_edad="menor_60", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                ]
+                for row in _SEED_COM:
+                    db3.add(ComisionMayorACasa(**row))
+                db3.commit()
+                print(f"\u2705 {len(_SEED_COM)} comisiones de ejemplo insertadas")
+        finally:
+            db3.close()
+
     except Exception as startup_err:
         import traceback
         print(f"\u274c ERROR EN ARRANQUE: {startup_err}")
