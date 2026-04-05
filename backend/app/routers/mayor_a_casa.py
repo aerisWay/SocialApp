@@ -15,9 +15,13 @@ from app.database import get_db
 from app.models.caso_mayor_a_casa import CasoMayorACasa
 from app.models.comision_mayor_a_casa import ComisionMayorACasa
 from app.models.factura_mayor_a_casa import FacturaMayorACasa
+from app.models.seguimiento_mayor_a_casa import SeguimientoMayorACasa
+from app.models.documentacion_mayor_a_casa import DocumentacionMayorACasa
 from app.schemas.caso_mayor_a_casa import CasoCreate, CasoUpdate, CasoResponse
 from app.schemas.comision_mayor_a_casa import ComisionCreate, ComisionUpdate, ComisionResponse
 from app.schemas.factura_mayor_a_casa import FacturaUpsert, FacturaResponse
+from app.schemas.seguimiento_mayor_a_casa import SeguimientoUpsert, SeguimientoResponse
+from app.schemas.documentacion_mayor_a_casa import DocumentacionCreate, DocumentacionUpdate, DocumentacionResponse
 from app.utils.auth import get_current_dept
 
 router = APIRouter(dependencies=[Depends(get_current_dept)])
@@ -518,3 +522,106 @@ def delete_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
         factura.pdf_filename = None
         db.commit()
     return
+
+
+UPLOAD_DIR_DOC = Path(__file__).parent.parent / "static" / "uploads" / "documentacion"
+
+# ═══════════════════════════════════════════════════════════════
+#  ENDPOINTS — SEGUIMIENTO (Entrevistas / Visitas / Informes)
+# ═══════════════════════════════════════════════════════════════
+
+@router.get("/seguimientos/", response_model=List[SeguimientoResponse], summary="Listar seguimientos")
+def list_seguimientos(
+    tipo: Optional[str] = None,
+    anio: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    q = db.query(SeguimientoMayorACasa)
+    if tipo:
+        q = q.filter(SeguimientoMayorACasa.tipo == tipo)
+    if anio:
+        q = q.filter(SeguimientoMayorACasa.anio == anio)
+    return q.order_by(SeguimientoMayorACasa.tipo, SeguimientoMayorACasa.anio, SeguimientoMayorACasa.mes).all()
+
+
+@router.put("/seguimientos/", response_model=SeguimientoResponse, summary="Crear o actualizar seguimiento (upsert)")
+def upsert_seguimiento(data: SeguimientoUpsert, db: Session = Depends(get_db)):
+    existing = db.query(SeguimientoMayorACasa).filter(
+        SeguimientoMayorACasa.tipo == data.tipo,
+        SeguimientoMayorACasa.anio == data.anio,
+        SeguimientoMayorACasa.mes  == data.mes,
+    ).first()
+    if existing:
+        for field, value in data.model_dump(exclude_unset=True).items():
+            setattr(existing, field, value)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    seg = SeguimientoMayorACasa(**data.model_dump())
+    db.add(seg)
+    db.commit()
+    db.refresh(seg)
+    return seg
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ENDPOINTS — DOCUMENTACIÓN
+# ═══════════════════════════════════════════════════════════════
+
+@router.get("/documentacion/", response_model=List[DocumentacionResponse], summary="Listar documentos")
+def list_documentacion(db: Session = Depends(get_db)):
+    return db.query(DocumentacionMayorACasa).order_by(DocumentacionMayorACasa.titulo).all()
+
+
+@router.post("/documentacion/", response_model=DocumentacionResponse, status_code=201, summary="Crear documento")
+def create_documentacion(data: DocumentacionCreate, db: Session = Depends(get_db)):
+    doc = DocumentacionMayorACasa(titulo=data.titulo)
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+@router.patch("/documentacion/{doc_id}", response_model=DocumentacionResponse, summary="Actualizar documento")
+def update_documentacion(doc_id: int, data: DocumentacionUpdate, db: Session = Depends(get_db)):
+    doc = db.query(DocumentacionMayorACasa).filter(DocumentacionMayorACasa.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(doc, field, value)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+@router.delete("/documentacion/{doc_id}", status_code=204, summary="Eliminar documento")
+def delete_documentacion(doc_id: int, db: Session = Depends(get_db)):
+    doc = db.query(DocumentacionMayorACasa).filter(DocumentacionMayorACasa.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    if doc.pdf_filename:
+        filepath = UPLOAD_DIR_DOC / doc.pdf_filename
+        if filepath.exists():
+            filepath.unlink()
+    db.delete(doc)
+    db.commit()
+
+
+@router.post("/documentacion/{doc_id}/pdf", summary="Subir PDF de documentación")
+async def upload_documentacion_pdf(
+    doc_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    doc = db.query(DocumentacionMayorACasa).filter(DocumentacionMayorACasa.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+    UPLOAD_DIR_DOC.mkdir(parents=True, exist_ok=True)
+    filename = f"doc_{doc_id}.pdf"
+    (UPLOAD_DIR_DOC / filename).write_bytes(await file.read())
+    doc.pdf_filename = filename
+    db.commit()
+    db.refresh(doc)
+    return {"pdf_url": f"/static/uploads/documentacion/{filename}", "doc": DocumentacionResponse.model_validate(doc)}

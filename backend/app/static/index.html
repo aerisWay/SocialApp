@@ -102,9 +102,11 @@
 
         <!-- ── Pestañas internas ── -->
         <nav class="inner-tabs-nav" id="inner-tabs-nav">
-          <button class="inner-tab active" data-itab="usuarios" data-i18n="itab_usuarios">👥 Usuarios</button>
-          <button class="inner-tab" data-itab="facturas"   data-i18n="itab_facturas">🧾 Facturas</button>
-          <button class="inner-tab" data-itab="comisiones" data-i18n="itab_comisiones">📋 Comisiones</button>
+          <button class="inner-tab active" data-itab="usuarios"      data-i18n="itab_usuarios">👥 Usuarios</button>
+          <button class="inner-tab"        data-itab="facturas"      data-i18n="itab_facturas">🧾 Facturas</button>
+          <button class="inner-tab"        data-itab="comisiones"    data-i18n="itab_comisiones">📋 Comisiones</button>
+          <button class="inner-tab"        data-itab="seguimiento"   data-i18n="itab_seguimiento">📊 Seguimiento</button>
+          <button class="inner-tab"        data-itab="documentacion" data-i18n="itab_documentacion">📁 Documentación</button>
         </nav>
 
         <!-- ════════════════ PESTAÑA USUARIOS ════════════════ -->
@@ -188,8 +190,8 @@
                   <th data-i18n="th_zona">Zona</th>
                   <th data-i18n="th_edad">Edad</th>
                   <th data-i18n="th_sexo">Sexo</th>
-                  <th data-i18n="th_tel">Tel.</th>
-                  <th data-i18n="lbl_mes_renov">Renov.</th>
+                  <th data-i18n="th_telefono">Teléfono</th>
+                  <th data-i18n="th_renov">Renov.</th>
                   <th data-i18n="th_alta">Alta</th>
                   <th data-i18n="th_estado">Estado</th>
                   <th data-i18n="th_acciones">Acciones</th>
@@ -310,7 +312,7 @@
                   <th data-i18n="th_zona">Zona</th>
                   <th data-i18n="th_edad">Edad</th>
                   <th data-i18n="th_sexo">Sexo</th>
-                  <th data-i18n="lbl_mes">MES:</th>
+                  <th data-i18n="th_mes_com">Mes Comisión</th>
                   <th data-i18n="th_estado_comision">Estado</th>
                   <th data-i18n="th_acciones">Acciones</th>
                 </tr>
@@ -322,6 +324,124 @@
           </div>
 
         </div><!-- /itab-comisiones -->
+
+        <!-- ════════════════ PESTAÑA SEGUIMIENTO ════════════════ -->
+        <div id="itab-seguimiento" class="inner-tab-panel hidden">
+
+          <div class="facturas-header">
+            <h3 class="facturas-title" data-i18n="seg_title">Seguimiento anual</h3>
+            <div class="facturas-year-wrap">
+              <label class="toolbar-label" data-i18n="facturas_anio">Año:</label>
+              <select id="seg-anio" class="year-select"></select>
+            </div>
+          </div>
+
+          <!-- Sub-pestañas de seguimiento -->
+          <nav class="inner-tabs-nav inner-tabs-nav--sub" id="seg-tabs-nav">
+            <button class="inner-tab active" data-segtab="entrevista" data-i18n="seg_entrevistas">🗣 Entrevistas</button>
+            <button class="inner-tab"        data-segtab="visita"     data-i18n="seg_visitas">🚪 Visitas</button>
+            <button class="inner-tab"        data-segtab="informe"    data-i18n="seg_informes">📄 Informes</button>
+          </nav>
+
+          <!-- Panel Entrevistas -->
+          <div id="segtab-entrevista" class="seg-tab-panel">
+            <div class="chart-row" style="margin-bottom:18px;">
+              <div class="chart-card">
+                <div class="chart-title" data-i18n="seg_chart_sexo">Distribución por Sexo</div>
+                <div class="chart-inner">
+                  <canvas id="chart-seg-entrevista" width="140" height="140"></canvas>
+                  <div class="chart-legend" id="chart-legend-seg-entrevista"></div>
+                </div>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table facturas-table">
+                <thead><tr>
+                  <th data-i18n="th_mes">Mes</th>
+                  <th data-i18n="seg_th_cantidad">Cantidad</th>
+                  <th data-i18n="seg_th_hombres">Hombres</th>
+                  <th data-i18n="seg_th_mujeres">Mujeres</th>
+                </tr></thead>
+                <tbody id="tbody-seg-entrevista"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Panel Visitas -->
+          <div id="segtab-visita" class="seg-tab-panel hidden">
+            <div class="chart-row" style="margin-bottom:18px;">
+              <div class="chart-card">
+                <div class="chart-title" data-i18n="seg_chart_sexo">Distribución por Sexo</div>
+                <div class="chart-inner">
+                  <canvas id="chart-seg-visita" width="140" height="140"></canvas>
+                  <div class="chart-legend" id="chart-legend-seg-visita"></div>
+                </div>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table facturas-table">
+                <thead><tr>
+                  <th data-i18n="th_mes">Mes</th>
+                  <th data-i18n="seg_th_cantidad">Cantidad</th>
+                  <th data-i18n="seg_th_hombres">Hombres</th>
+                  <th data-i18n="seg_th_mujeres">Mujeres</th>
+                </tr></thead>
+                <tbody id="tbody-seg-visita"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Panel Informes -->
+          <div id="segtab-informe" class="seg-tab-panel hidden">
+            <div class="chart-row" style="margin-bottom:18px;">
+              <div class="chart-card">
+                <div class="chart-title" data-i18n="seg_chart_sexo">Distribución por Sexo</div>
+                <div class="chart-inner">
+                  <canvas id="chart-seg-informe" width="140" height="140"></canvas>
+                  <div class="chart-legend" id="chart-legend-seg-informe"></div>
+                </div>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table facturas-table">
+                <thead><tr>
+                  <th data-i18n="th_mes">Mes</th>
+                  <th data-i18n="seg_th_cantidad">Cantidad</th>
+                  <th data-i18n="seg_th_hombres">Hombres</th>
+                  <th data-i18n="seg_th_mujeres">Mujeres</th>
+                </tr></thead>
+                <tbody id="tbody-seg-informe"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /itab-seguimiento -->
+
+        <!-- ════════════════ PESTAÑA DOCUMENTACIÓN ════════════════ -->
+        <div id="itab-documentacion" class="inner-tab-panel hidden">
+
+          <div class="itab-actions">
+            <button class="btn btn-primary" id="btn-nuevo-doc" data-i18n="btn_nuevo_doc">
+              <span>✦</span> Nuevo documento
+            </button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="doc_th_titulo">Título</th>
+                  <th data-i18n="th_pdf_adjunto">PDF Adjunto</th>
+                  <th data-i18n="th_acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-docs">
+                <tr><td colspan="3" class="loading-cell"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /itab-documentacion -->
 
       </section>
     </main>
@@ -447,6 +567,33 @@
         <div class="modal-footer-right">
           <button type="button" class="btn btn-ghost" id="modal-cancel" data-i18n="btn_cancelar">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="modal-submit" form="caso-form" data-i18n="btn_guardar">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ MODAL DOCUMENTO ═══════════════════ -->
+  <div class="modal-backdrop hidden" id="doc-modal-backdrop">
+    <div class="modal-card" style="max-width:460px;">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="doc-modal-title" data-i18n="btn_nuevo_doc">Nuevo documento</h2>
+        </div>
+        <button class="modal-close" id="doc-modal-close" title="Cerrar">✕</button>
+      </div>
+      <form class="modal-body" id="doc-form" novalidate>
+        <div class="form-grid" style="grid-template-columns:1fr;">
+          <div class="form-group">
+            <label for="f-doc-titulo" data-i18n="doc_lbl_titulo">Título <span class="req">*</span></label>
+            <input type="text" id="f-doc-titulo" placeholder="Nombre del documento…" required />
+          </div>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger-ghost hidden" id="doc-btn-eliminar" data-i18n="btn_eliminar">🗑️ Eliminar</button>
+        <div class="modal-footer-right">
+          <button type="button" class="btn btn-ghost" id="doc-modal-cancel" data-i18n="btn_cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="doc-modal-submit" form="doc-form" data-i18n="btn_guardar">Guardar</button>
         </div>
       </div>
     </div>

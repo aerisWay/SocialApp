@@ -132,6 +132,23 @@ const I18N = {
     chart_sexo_title:  'Distribución por Género',
     chart_estado_title: 'Distribución por Estado',
     chart_estado_com_title: 'Estado de Tramitación',
+    itab_seguimiento:  '📊 Seguimiento',
+    itab_documentacion:'📁 Documentación',
+    seg_title:         'Seguimiento anual',
+    seg_entrevistas:   '🗣 Entrevistas',
+    seg_visitas:       '🚪 Visitas',
+    seg_informes:      '📄 Informes',
+    seg_th_cantidad:   'Cantidad',
+    seg_th_hombres:    'Hombres',
+    seg_th_mujeres:    'Mujeres',
+    seg_chart_sexo:    'Distribución por Sexo',
+    th_mes_com:        'Mes Comisión',
+    doc_th_titulo:     'Título',
+    doc_lbl_titulo:    'Título',
+    btn_nuevo_doc:     '<span>✦</span> Nuevo documento',
+    toast_doc_saved:   'Documento guardado',
+    toast_doc_deleted: 'Documento eliminado',
+    confirm_del_doc:   '¿Eliminar el documento',
   },
   val: {
     login_sub:     'Accés per a APB — Regidoria de Benestar Social',
@@ -253,6 +270,23 @@ const I18N = {
     btn_subir_pdf: 'Pujar PDF',
     btn_ver_pdf:   'Veure PDF',
     btn_cambiar_pdf:'Canviar',
+    itab_seguimiento:  '📊 Seguiment',
+    itab_documentacion:'📁 Documentació',
+    seg_title:         'Seguiment anual',
+    seg_entrevistas:   '🗣 Entrevistes',
+    seg_visitas:       '🚪 Visites',
+    seg_informes:      '📄 Informes',
+    seg_th_cantidad:   'Quantitat',
+    seg_th_hombres:    'Homes',
+    seg_th_mujeres:    'Dones',
+    seg_chart_sexo:    'Distribució per Sexe',
+    th_mes_com:        'Mes Comissió',
+    doc_th_titulo:     'Títol',
+    doc_lbl_titulo:    'Títol',
+    btn_nuevo_doc:     '<span>✦</span> Nou document',
+    toast_doc_saved:   'Document guardat',
+    toast_doc_deleted: 'Document eliminat',
+    confirm_del_doc:   'Eliminar el document',
   },
 };
 
@@ -296,6 +330,13 @@ const state = {
   // Facturas
   facturas:    [],
   facturasAnio: new Date().getFullYear(),
+  // Seguimiento
+  seguimientos:  [],
+  segAnio:       new Date().getFullYear(),
+  segTab:        'entrevista',
+  // Documentación
+  docs:          [],
+  editingDocId:  null,
   // UI
   innerTab:    'usuarios',
   modalMode:   'usuario',   // 'usuario' | 'comision'
@@ -426,6 +467,7 @@ function initApp() {
   g('main-app').classList.remove('hidden');
   cargarCasos().catch(() => toast(t('toast_load_err'), 'error'));
   initFacturasAnio();
+  initSegAnio();
 }
 
 // ── Inner tabs ────────────────────────────────────────────────
@@ -447,6 +489,12 @@ function switchInnerTab(tab) {
   }
   if (tab === 'facturas') {
     cargarFacturas();
+  }
+  if (tab === 'seguimiento') {
+    cargarSeguimientos();
+  }
+  if (tab === 'documentacion') {
+    cargarDocs();
   }
 }
 
@@ -562,6 +610,202 @@ async function subirPdfFactura(facturaId, file) {
   });
   if (!res.ok) throw new Error('Error al subir PDF');
   return res.json();
+}
+
+// ── Seguimiento ───────────────────────────────────────────────
+
+async function cargarSeguimientos() {
+  try {
+    state.seguimientos = await api('GET', `/mayor-a-casa/seguimientos/?anio=${state.segAnio}`);
+    renderSeguimientos();
+  } catch {
+    toast(t('toast_load_err'), 'error');
+  }
+}
+
+async function guardarSeguimiento(tipo, anio, mes, datos) {
+  try {
+    const result = await api('PUT', '/mayor-a-casa/seguimientos/', { tipo, anio, mes, ...datos });
+    const idx = state.seguimientos.findIndex(s => s.tipo === tipo && s.anio === anio && s.mes === mes);
+    if (idx >= 0) state.seguimientos[idx] = result;
+    else state.seguimientos.push(result);
+    renderSeguimientoChart(tipo);
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function initSegAnio() {
+  const sel = g('seg-anio');
+  if (!sel) return;
+  const cur = new Date().getFullYear();
+  sel.innerHTML = '';
+  for (let y = cur + 2; y >= cur - 4; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === state.segAnio) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  sel.addEventListener('change', () => {
+    state.segAnio = parseInt(sel.value);
+    cargarSeguimientos();
+  });
+}
+
+function renderSeguimientos() {
+  ['entrevista','visita','informe'].forEach(tipo => renderSeguimientoTabla(tipo));
+  ['entrevista','visita','informe'].forEach(tipo => renderSeguimientoChart(tipo));
+}
+
+function renderSeguimientoTabla(tipo) {
+  const tbody = g(`tbody-seg-${tipo}`);
+  if (!tbody) return;
+  const anio  = state.segAnio;
+  const meses = state.lang === 'val' ? MESES_VAL : MESES_ES;
+
+  tbody.innerHTML = meses.map((mesNom, i) => {
+    const mes = i + 1;
+    const row = state.seguimientos.find(s => s.tipo === tipo && s.anio === anio && s.mes === mes);
+    const rowId   = row?.id ?? '';
+    const cant    = row?.cantidad ?? '';
+    const hombres = row?.hombres  ?? '';
+    const mujeres = row?.mujeres  ?? '';
+    return `
+      <tr>
+        <td class="td-name">${mesNom}</td>
+        <td><input type="number" min="0" class="seg-input table-input" data-tipo="${tipo}" data-anio="${anio}" data-mes="${mes}" data-field="cantidad"  data-sid="${rowId}" value="${cant}"    placeholder="—"></td>
+        <td><input type="number" min="0" class="seg-input table-input" data-tipo="${tipo}" data-anio="${anio}" data-mes="${mes}" data-field="hombres"   data-sid="${rowId}" value="${hombres}" placeholder="—"></td>
+        <td><input type="number" min="0" class="seg-input table-input" data-tipo="${tipo}" data-anio="${anio}" data-mes="${mes}" data-field="mujeres"   data-sid="${rowId}" value="${mujeres}" placeholder="—"></td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.seg-input').forEach(input => {
+    input.addEventListener('change', async e => {
+      const { tipo: tp, anio: a, mes: m, field } = e.target.dataset;
+      const raw = e.target.value;
+      const value = raw === '' ? null : parseInt(raw);
+      await guardarSeguimiento(tp, parseInt(a), parseInt(m), { [field]: value });
+    });
+  });
+}
+
+function renderSeguimientoChart(tipo) {
+  const canvas = g(`chart-seg-${tipo}`);
+  const legend = g(`chart-legend-seg-${tipo}`);
+  if (!canvas || !legend) return;
+  const anio = state.segAnio;
+  const rows = state.seguimientos.filter(s => s.tipo === tipo && s.anio === anio);
+  const totalH = rows.reduce((acc, r) => acc + (r.hombres || 0), 0);
+  const totalM = rows.reduce((acc, r) => acc + (r.mujeres || 0), 0);
+  const total  = totalH + totalM;
+  _drawDonut(canvas, legend, [
+    { label: t('seg_th_hombres'), color: '#6366f1', count: totalH },
+    { label: t('seg_th_mujeres'), color: '#f43f5e', count: totalM },
+  ], total);
+}
+
+// ── Documentación ─────────────────────────────────────────────
+
+async function cargarDocs() {
+  try {
+    state.docs = await api('GET', '/mayor-a-casa/documentacion/');
+    renderDocs();
+  } catch {
+    toast(t('toast_load_err'), 'error');
+  }
+}
+
+async function crearDoc(titulo) {
+  const doc = await api('POST', '/mayor-a-casa/documentacion/', { titulo });
+  state.docs.push(doc);
+  renderDocs();
+  return doc;
+}
+
+async function actualizarDoc(id, datos) {
+  const doc = await api('PATCH', `/mayor-a-casa/documentacion/${id}`, datos);
+  const idx = state.docs.findIndex(d => d.id === id);
+  if (idx >= 0) state.docs[idx] = doc;
+  renderDocs();
+}
+
+async function eliminarDoc(id) {
+  await api('DELETE', `/mayor-a-casa/documentacion/${id}`);
+  state.docs = state.docs.filter(d => d.id !== id);
+  renderDocs();
+}
+
+async function subirPdfDoc(docId, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const headers = {};
+  if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+  const res = await fetch(`/mayor-a-casa/documentacion/${docId}/pdf`, {
+    method: 'POST', headers, body: formData,
+  });
+  if (!res.ok) throw new Error('Error al subir PDF');
+  return res.json();
+}
+
+function renderDocs() {
+  const tbody = g('tbody-docs');
+  if (!tbody) return;
+  if (!state.docs.length) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-cell">${t('empty_no_data')}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.docs.map(doc => `
+    <tr data-doc-id="${doc.id}">
+      <td><input class="doc-titulo-input" data-id="${doc.id}" value="${esc(doc.titulo)}" /></td>
+      <td class="td-pdf-cell">
+        ${doc.pdf_filename
+          ? `<div class="pdf-btn-group">
+               <a class="btn btn-ghost btn-sm" href="/static/uploads/documentacion/${doc.pdf_filename}" target="_blank">📄 ${t('btn_ver_pdf')}</a>
+             </div>`
+          : ''}
+        <label class="btn btn-ghost btn-sm upload-label">
+          📎 ${doc.pdf_filename ? t('btn_cambiar_pdf') : t('btn_subir_pdf')}
+          <input type="file" accept="application/pdf" class="upload-doc-pdf hidden" data-doc-id="${doc.id}">
+        </label>
+      </td>
+      <td class="td-actions">
+        <button class="btn-icon delete-doc-btn" data-id="${doc.id}" title="Eliminar">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('.doc-titulo-input').forEach(input => {
+    input.addEventListener('change', async e => {
+      const id = parseInt(e.target.dataset.id);
+      const titulo = e.target.value.trim();
+      if (!titulo) return;
+      try { await actualizarDoc(id, { titulo }); } catch (err) { toast(err.message, 'error'); }
+    });
+  });
+
+  tbody.querySelectorAll('.upload-doc-pdf').forEach(input => {
+    input.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const docId = parseInt(e.target.dataset.docId);
+      try {
+        await subirPdfDoc(docId, file);
+        await cargarDocs();
+        toast('PDF subido correctamente', 'success');
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  });
+
+  tbody.querySelectorAll('.delete-doc-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = parseInt(btn.dataset.id);
+      const doc = state.docs.find(d => d.id === id);
+      if (doc && confirm(`${t('confirm_del_doc')} "${doc.titulo}"?`)) {
+        try {
+          await eliminarDoc(id);
+          toast(t('toast_doc_deleted'), 'info');
+        } catch (err) { toast(err.message, 'error'); }
+      }
+    });
+  });
 }
 
 // ── Estadísticas Usuarios ─────────────────────────────────────
@@ -1010,6 +1254,8 @@ function toggleLang() {
   renderComisiones();
   renderStatsComisiones();
   renderFacturas();
+  renderSeguimientos();
+  renderDocs();
 }
 
 // ── Modal (usuarios y comisiones) ─────────────────────────────
@@ -1375,5 +1621,58 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSortUI();
       renderTabla();
     });
+  });
+
+  // Seguimiento sub-tabs
+  const segTabsNav = g('seg-tabs-nav');
+  if (segTabsNav) {
+    segTabsNav.addEventListener('click', e => {
+      const btn = e.target.closest('.inner-tab');
+      if (!btn || !btn.dataset.segtab) return;
+      const tipo = btn.dataset.segtab;
+      state.segTab = tipo;
+      segTabsNav.querySelectorAll('.inner-tab').forEach(b => b.classList.toggle('active', b.dataset.segtab === tipo));
+      document.querySelectorAll('.seg-tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `segtab-${tipo}`));
+    });
+  }
+
+  // Nuevo documento modal
+  g('btn-nuevo-doc').addEventListener('click', () => {
+    state.editingDocId = null;
+    g('f-doc-titulo').value = '';
+    g('doc-btn-eliminar').classList.add('hidden');
+    g('doc-modal-backdrop').classList.remove('hidden');
+  });
+  g('doc-modal-close').addEventListener('click', () => g('doc-modal-backdrop').classList.add('hidden'));
+  g('doc-modal-cancel').addEventListener('click', () => g('doc-modal-backdrop').classList.add('hidden'));
+  g('doc-modal-backdrop').addEventListener('click', e => {
+    if (e.target === g('doc-modal-backdrop')) g('doc-modal-backdrop').classList.add('hidden');
+  });
+  g('doc-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const titulo = g('f-doc-titulo').value.trim();
+    if (!titulo) { toast(t('val_required'), 'error'); return; }
+    g('doc-modal-submit').disabled = true;
+    try {
+      if (state.editingDocId) {
+        await actualizarDoc(state.editingDocId, { titulo });
+      } else {
+        await crearDoc(titulo);
+      }
+      g('doc-modal-backdrop').classList.add('hidden');
+      toast(t('toast_doc_saved'), 'success');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { g('doc-modal-submit').disabled = false; }
+  });
+  g('doc-btn-eliminar').addEventListener('click', async () => {
+    if (!state.editingDocId) return;
+    const doc = state.docs.find(d => d.id === state.editingDocId);
+    if (doc && confirm(`${t('confirm_del_doc')} "${doc.titulo}"?`)) {
+      try {
+        await eliminarDoc(state.editingDocId);
+        g('doc-modal-backdrop').classList.add('hidden');
+        toast(t('toast_doc_deleted'), 'info');
+      } catch (err) { toast(err.message, 'error'); }
+    }
   });
 });
