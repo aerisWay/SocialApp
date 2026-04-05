@@ -48,10 +48,6 @@ class CasoMayorACasa(Base):
     fecha_alta = Column(Date, nullable=True)
     fecha_baja = Column(Date, nullable=True)
 
-    # ── Rango de edad ─────────────────────────────────────────
-    # 'menor_60' | '60_65' | 'mayor_65' | None
-    rango_edad = Column(String(15), nullable=True)
-
     # ── Sexo ──────────────────────────────────────────────────
     # Valores: 'hombre' | 'mujer' | 'no_define' | None
     sexo = Column(String(10), nullable=True)

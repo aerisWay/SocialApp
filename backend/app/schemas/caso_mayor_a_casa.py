@@ -24,7 +24,6 @@ class CasoCreate(BaseModel):
 
     # Opcionales
     zona:           Optional[int]  = None
-    rango_edad:     Optional[str]  = None
     sexo:           Optional[str]  = None
     mes_renovacion: Optional[str]  = None
     telefono:       Optional[str]  = None
@@ -63,13 +62,6 @@ class CasoCreate(BaseModel):
             return v
         return None
 
-    @field_validator("rango_edad")
-    @classmethod
-    def rango_edad_valido(cls, v):
-        if v is not None and v not in ('menor_60', '60_65', 'mayor_65'):
-            raise ValueError("Rango de edad debe ser 'menor_60', '60_65' o 'mayor_65'")
-        return v or None
-
     @field_validator("sexo")
     @classmethod
     def sexo_valido(cls, v):
@@ -101,7 +93,6 @@ class CasoUpdate(BaseModel):
     dni:            Optional[str]  = None
     sip:            Optional[str]  = None
     zona:           Optional[int]  = None
-    rango_edad:     Optional[str]  = None
     sexo:           Optional[str]  = None
     mes_renovacion: Optional[str]  = None
     telefono:       Optional[str]  = None
@@ -145,7 +136,6 @@ class CasoResponse(BaseModel):
     dni:            Optional[str]
     sip:            Optional[str]
     zona:           Optional[int]
-    rango_edad:     Optional[str]
     sexo:           Optional[str]
     mes_renovacion: Optional[str]
     telefono:       Optional[str]
