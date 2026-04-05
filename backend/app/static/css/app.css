@@ -330,6 +330,10 @@ a { color: var(--accent); }
   vertical-align: middle;
 }
 
+.td-center, .th-center {
+  text-align: center;
+}
+
 .td-name { color: var(--text-1) !important; font-weight: 500; }
 .td-name strong { font-weight: 600; }
 

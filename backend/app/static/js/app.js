@@ -13,11 +13,12 @@ const I18N = {
     lbl_usuario:   'Usuario del departamento',
     lbl_password:  'Contraseña',
     btn_login:     'Iniciar sesión',
-    btn_logout:    'Cerrar sesión',
-    view_title:    'Major a Casa',
+    welcome:       'Bienvenido,',
+    view_title:    'Menjar a Casa',
     itab_usuarios:  '👥 Usuarios',
     itab_facturas:  '🧾 Facturas',
     itab_comisiones:'📋 Comisiones',
+    btn_logout:    'Cerrar sesión',
     stat_total:    'Total casos',
     stat_activos:  'Activos',
     stat_bajas:    'Dados de baja',
@@ -112,7 +113,6 @@ const I18N = {
     val_dni_or_sip:'Debes introducir al menos DNI o SIP',
     val_dni_bad:   'El DNI debe tener 8 dígitos y 1 letra (ej: 12345678X)',
     val_sip_bad:   'El SIP debe tener exactamente 8 dígitos',
-    welcome:       'Bienvenido,',
     opt_no_asignar:'— Sin asignar —',
     opt_no_sexo:   '— No especificado —',
     facturas_title:'Facturas anuales',
@@ -127,7 +127,7 @@ const I18N = {
     btn_quitar_pdf: 'Eliminar PDF',
     confirm_quitar_pdf: '¿Seguro que quieres eliminar el PDF adjunto?',
     toast_pdf_deleted: 'PDF eliminado correctamente',
-    lbl_mes:       'Mes:',
+    lbl_mes:       'Mes comisión:',
     chart_edad_title:  'Distribución por Edad',
     chart_sexo_title:  'Distribución por Género',
     chart_estado_title: 'Distribución por Estado',
@@ -140,7 +140,7 @@ const I18N = {
     lbl_password:  'Contrasenya',
     btn_login:     'Iniciar sessió',
     btn_logout:    'Tancar sessió',
-    view_title:    'Major a Casa',
+    view_title:    'Menjar a Casa',
     itab_usuarios:  '👥 Usuaris',
     itab_facturas:  '🧾 Factures',
     itab_comisiones:'📋 Comissions',
@@ -152,11 +152,8 @@ const I18N = {
     stat_mujeres:  'Dones',
     comision_total: 'Total comissions',
     stat_tramite:   'En tràmit',
-    stat_aprobadas: 'Aprovades',
+    stat_aprovades: 'Aprovades',
     app_name:          'APBApp',
-    itab_usuarios:     'Usuaris',
-    itab_facturas:     'Factures',
-    itab_comisiones:   'Comissions',
     btn_nuevo:         '+ Nou Cas',
     btn_nuevo_comision: '+ Nova Comissió',
     lbl_zona:          'Zona:',
@@ -176,8 +173,6 @@ const I18N = {
     btn_pdf:       '<span>📊</span> Generar Informe PDF',
     pdf_activos:   '📋 Tots els casos actius',
     pdf_renov:     '📅 Renovació del mes actual',
-    btn_nuevo:     '<span>✦</span> Nou cas',
-    btn_nuevo_comision: '<span>✦</span> Nova comissió',
     btn_aprobar:   '✓ Aprovar i crear usuari',
     lbl_apellidos: 'Cognoms <span class="req">*</span>',
     lbl_nombre:    'Nom <span class="req">*</span>',
@@ -453,57 +448,57 @@ function switchInnerTab(tab) {
 // ── API: CRUD Casos ───────────────────────────────────────────
 
 async function cargarCasos() {
-  state.casos = await api('GET', '/mayor-a-casa/casos/');
+  state.casos = await api('GET', '/menjar-a-casa/casos/');
   renderTabla();
   renderStats();
   renderStats();
 }
 
 async function crearCaso(datos) {
-  await api('POST', '/mayor-a-casa/casos/', datos);
+  await api('POST', '/menjar-a-casa/casos/', datos);
   await cargarCasos();
 }
 
 async function actualizarCaso(id, datos) {
-  await api('PATCH', `/mayor-a-casa/casos/${id}`, datos);
+  await api('PATCH', `/menjar-a-casa/casos/${id}`, datos);
   await cargarCasos();
 }
 
 async function eliminarCaso(id) {
-  await api('DELETE', `/mayor-a-casa/casos/${id}`);
+  await api('DELETE', `/menjar-a-casa/casos/${id}`);
   await cargarCasos();
 }
 
 // ── API: CRUD Comisiones ──────────────────────────────────────
 
 async function cargarComisiones() {
-  state.comisiones = await api('GET', '/mayor-a-casa/comisiones/');
+  state.comisiones = await api('GET', '/menjar-a-casa/comisiones/');
   renderComisiones();
   renderStatsComisiones();
 }
 
 async function crearComision(datos) {
-  await api('POST', '/mayor-a-casa/comisiones/', datos);
+  await api('POST', '/menjar-a-casa/comisiones/', datos);
   await cargarComisiones();
 }
 
 async function actualizarComision(id, datos) {
-  await api('PATCH', `/mayor-a-casa/comisiones/${id}`, datos);
+  await api('PATCH', `/menjar-a-casa/comisiones/${id}`, datos);
   await cargarComisiones();
 }
 
 async function eliminarComision(id) {
-  await api('DELETE', `/mayor-a-casa/comisiones/${id}`);
+  await api('DELETE', `/menjar-a-casa/comisiones/${id}`);
   await cargarComisiones();
 }
 
 async function eliminarPdfFactura(id) {
-  await api('DELETE', `/mayor-a-casa/facturas/${id}/pdf`);
+  await api('DELETE', `/menjar-a-casa/facturas/${id}/pdf`);
   await cargarFacturas();
 }
 
 async function aprobarComision(id) {
-  const caso = await api('POST', `/mayor-a-casa/comisiones/${id}/aprobar`);
+  const caso = await api('POST', `/menjar-a-casa/comisiones/${id}/aprobar`);
   await cargarComisiones();
   await cargarCasos();
   cerrarModal();
@@ -517,7 +512,7 @@ async function aprobarComision(id) {
 
 async function cargarFacturas() {
   try {
-    state.facturas = await api('GET', `/mayor-a-casa/facturas/?anio=${state.facturasAnio}`);
+    state.facturas = await api('GET', `/menjar-a-casa/facturas/?anio=${state.facturasAnio}`);
     renderFacturas();
     renderStatsFacturas();
   } catch {
@@ -541,7 +536,7 @@ function renderStatsFacturas() {
 
 async function guardarFactura(anio, mes, datos) {
   try {
-    const result = await api('PUT', '/mayor-a-casa/facturas/', { anio, mes, ...datos });
+    const result = await api('PUT', '/menjar-a-casa/facturas/', { anio, mes, ...datos });
     const idx = state.facturas.findIndex(f => f.anio === anio && f.mes === mes);
     if (idx >= 0) state.facturas[idx] = result;
     else state.facturas.push(result);
@@ -557,7 +552,7 @@ async function subirPdfFactura(facturaId, file) {
   formData.append('file', file);
   const headers = {};
   if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
-  const res = await fetch(`/mayor-a-casa/facturas/${facturaId}/pdf`, {
+  const res = await fetch(`/menjar-a-casa/facturas/${facturaId}/pdf`, {
     method: 'POST', headers, body: formData,
   });
   if (!res.ok) throw new Error('Error al subir PDF');
@@ -819,14 +814,14 @@ function renderComisiones() {
   tbody.innerHTML = list.map(c => `
     <tr data-id="${c.id}">
       <td class="td-name"><strong>${esc(c.apellidos)}</strong>,&nbsp;${esc(c.nombre)}</td>
-      <td>${esc(c.dni) || '—'}</td>
-      <td>${state.sipSearchComision ? highlightSIP(c.sip, state.sipSearchComision) : (esc(c.sip) || '—')}</td>
-      <td>${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
-      <td>${rangoEdadLabel(c.rango_edad)}</td>
-      <td>${sexLabels[c.sexo] || '—'}</td>
-      <td>${formatMes(c.mes_comision)}</td>
-      <td>${estadoBadge(c.estado)}</td>
-      <td class="td-actions">
+      <td class="td-center">${esc(c.dni) || '—'}</td>
+      <td class="td-center">${state.sipSearchComision ? highlightSIP(c.sip, state.sipSearchComision) : (esc(c.sip) || '—')}</td>
+      <td class="td-center">${c.zona ? `<span class="zona-badge" data-zona="${c.zona}">Zona ${c.zona}</span>` : '—'}</td>
+      <td class="td-center">${rangoEdadLabel(c.rango_edad)}</td>
+      <td class="td-center">${sexLabels[c.sexo] || '—'}</td>
+      <td class="td-center">${formatMes(c.mes_comision)}</td>
+      <td class="td-center">${estadoBadge(c.estado)}</td>
+      <td class="td-actions td-center">
         <button class="btn-icon edit-btn-c" data-id="${c.id}" title="Editar">✏️</button>
         <button class="btn-icon delete-btn-c" data-id="${c.id}" title="Eliminar">🗑</button>
       </td>
@@ -1009,6 +1004,7 @@ function toggleLang() {
   renderStats();
   renderComisiones();
   renderStatsComisiones();
+  renderStatsComisiones();
   renderFacturas();
 }
 
@@ -1061,7 +1057,7 @@ function abrirModal(item = null, mode = 'usuario') {
     g('f-nombre').value      = item.nombre    || '';
     g('f-dni').value         = item.dni       || '';
     g('f-sip').value         = item.sip       || '';
-    g('f-zona').value        = item.zona      || '';
+    g('f-zona').value         = item.zona      || '';
     g('f-rango-edad').value  = item.rango_edad || '';
     g('f-sexo').value        = item.sexo      || '';
     g('f-tel').value         = item.telefono  || '';
@@ -1079,11 +1075,12 @@ function abrirModal(item = null, mode = 'usuario') {
     }
   } else {
     g('f-renov').value = new Date().toISOString().slice(0, 7);
-    g('f-alta').value  = new Date().toISOString().slice(0, 10);
     if (esComision) {
       g('f-estado-comision').value = 'en_tramite';
       g('f-mes-com').value = new Date().toISOString().slice(0, 7);
+      g('f-renov-row').style.display = 'none'; // No tiene sentido en comisiones Menjar a Casa
     } else {
+      g('f-renov-row').style.display = '';
       updateToggleLabel();
     }
   }
@@ -1202,8 +1199,8 @@ async function descargarPDF(tipo = 'activos') {
   btn.innerHTML = t('pdf_generating');
 
   let path = tipo === 'renovacion'
-    ? '/mayor-a-casa/casos/informe/pdf/renovacion'
-    : '/mayor-a-casa/casos/informe/pdf';
+    ? '/menjar-a-casa/casos/informe/pdf/renovacion'
+    : '/menjar-a-casa/casos/informe/pdf';
 
   const params = new URLSearchParams();
   if (state.filterZona) params.append('zona', state.filterZona);
