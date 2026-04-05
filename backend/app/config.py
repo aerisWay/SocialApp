@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # --- Base de datos ---
     # Valor por defecto para desarrollo local con Docker Compose
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/socialapp_db"
+    DATABASE_URL: str = "postgresql://user:password@localhost:5432/apbapp_db"
 
     # --- Seguridad / JWT ---
     SECRET_KEY: str = "cambia-esto-por-una-clave-secreta-muy-larga"
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # --- Nombre de la app ---
-    APP_NAME: str = "SocialApp"
+    APP_NAME: str = "APBApp"
 
     # --- Credenciales de departamentos ---
     DEPT_PROMOCION_PASSWORD: str = "Promocion2026"

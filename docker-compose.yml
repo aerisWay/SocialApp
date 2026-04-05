@@ -11,17 +11,17 @@ services:
   # SERVICIO 1: Base de datos PostgreSQL
   # ──────────────────────────────────────────
   db:
-    image: postgres:16-alpine          # Imagen oficial de PostgreSQL, versión ligera
-    container_name: socialapp_db       # Nombre visible en Docker Desktop
+    image: postgres:15-alpine          # Imagen oficial de PostgreSQL, versión ligera
+    container_name: apbapp_db       # Nombre visible en Docker Desktop
 
     environment:
-      POSTGRES_USER: socialapp_user       # Usuario de la BD
-      POSTGRES_PASSWORD: socialapp_pass   # Contraseña (cámbiala en producción)
-      POSTGRES_DB: socialapp_db           # Nombre de la base de datos
+      POSTGRES_USER: apbapp_user       # Usuario de la BD
+      POSTGRES_PASSWORD: apbapp_pass   # Contraseña (cámbiala en producción)
+      POSTGRES_DB: apbapp_db           # Nombre de la base de datos
 
     volumes:
-      # pgdata guarda los datos aunque apagues el contenedor
-      - pgdata:/var/lib/postgresql/data
+      # apbapp_pgdata guarda los datos aunque apagues el contenedor
+      - apbapp_pgdata:/var/lib/postgresql/data
 
     ports:
       # Puerto 5432 accesible desde tu PC (útil para conectar con DBeaver/TablePlus)
@@ -29,24 +29,23 @@ services:
 
     healthcheck:
       # Docker Desktop mostrará "healthy" cuando la BD esté lista
-      test: ["CMD-SHELL", "pg_isready -U socialapp_user -d socialapp_db"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U apbapp_user -d apbapp_db"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-    restart: unless-stopped            # Se reinicia automáticamente si algo falla
+    restart: always            # Se reinicia automáticamente si algo falla
 
 
   # ──────────────────────────────────────────
   # SERVICIO 2: Backend FastAPI
   # ──────────────────────────────────────────
   backend:
-    container_name: socialapp_backend  # Nombre visible en Docker Desktop
+    container_name: apbapp_backend  # Nombre visible en Docker Desktop
 
     build:
       context: ./backend               # Carpeta donde está el Dockerfile
       dockerfile: Dockerfile
-      target: development              # Usa el stage con hot-reload
 
     volumes:
       # Monta tu carpeta local → el contenedor ve tus cambios en tiempo real
@@ -55,7 +54,7 @@ services:
 
     environment:
       # La URL de la BD usa "db" como host (nombre del servicio de arriba)
-      DATABASE_URL: postgresql://socialapp_user:socialapp_pass@db:5432/socialapp_db
+      DATABASE_URL: postgresql://apbapp_user:apbapp_pass@db:5432/apbapp_db
       SECRET_KEY: dev-secret-key-cambia-esto-en-produccion
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -71,12 +70,12 @@ services:
       db:
         condition: service_healthy     # Espera a que la BD esté lista antes de arrancar
 
-    restart: unless-stopped
+    restart: always
 
 
 # ──────────────────────────────────────────
 # VOLÚMENES con nombre (persisten entre reinicios)
 # ──────────────────────────────────────────
 volumes:
-  pgdata:
-    name: socialapp_pgdata
+  apbapp_pgdata:
+    name: apbapp_pgdata

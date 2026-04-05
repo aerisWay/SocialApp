@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SocialApp — Gestión de Servicios Sociales</title>
+  <title>APBApp — Gestión de Servicios Sociales</title>
   <meta name="description" content="Sistema de gestión de servicios sociales." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -17,7 +17,7 @@
 
       <div class="login-brand">
         <img class="login-logo" src="/static/img/MainLogo.png" alt="Concejalía de Bienestar Social" />
-        <h1 class="login-title">SocialApp</h1>
+        <h1 class="login-title">APBApp</h1>
         <p class="login-sub" data-i18n="login_sub">Acceso para APB — Concejalía de Bienestar Social</p>
       </div>
 
@@ -61,7 +61,7 @@
       <div class="topbar-brand">
         <img class="brand-logo" src="/static/img/MainLogo.png" alt="Logo" />
         <div>
-          <span class="brand-name">SocialApp</span>
+          <span class="brand-name">APBApp</span>
         </div>
       </div>
       <nav class="topbar-nav">
@@ -97,7 +97,18 @@
             <h1 class="view-title" data-i18n="view_title">Major a Casa</h1>
             <p class="view-dept-subtitle">Concejalía de Bienestar Social - Ayto. Benidorm</p>
           </div>
-          <div class="view-actions">
+        </div>
+
+        <div class="inner-tabs">
+          <button class="inner-tab active" data-itab="usuarios" data-i18n="itab_usuarios">👥 Usuarios</button>
+          <button class="inner-tab" data-itab="facturas" data-i18n="itab_facturas">📄 Facturas</button>
+          <button class="inner-tab" data-itab="comisiones" data-i18n="itab_comisiones">📋 Comisiones</button>
+        </div>
+
+        <!-- ════════════════ PESTAÑA USUARIOS ════════════════ -->
+        <div id="itab-usuarios" class="inner-tab-panel">
+
+          <div class="itab-actions">
             <div class="btn-split-group" id="pdf-group">
               <button class="btn btn-pdf btn-split-main" id="btn-pdf" data-i18n="btn_pdf"><span>📊</span> Generar Informe PDF</button>
               <button class="btn btn-pdf btn-split-arrow" id="btn-pdf-toggle" title="Seleccionar tipo de informe">▾</button>
@@ -108,7 +119,6 @@
             </div>
             <button class="btn btn-primary" id="btn-nuevo" data-i18n="btn_nuevo"><span>✦</span> Nuevo caso</button>
           </div>
-        </div>
 
         <div class="stats-row">
           <div class="stat-card card-indigo"><span class="stat-icon">👥</span><div class="stat-value" id="stat-total">—</div><div class="stat-label" data-i18n="stat_total">Total casos</div></div>
@@ -146,26 +156,66 @@
           </div>
         </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th data-i18n="th_nombre">Apellidos, Nombre</th>
-                <th>DNI</th>
-                <th>SIP</th>
-                <th data-i18n="th_zona">Zona</th>
-                <th data-i18n="th_sexo">Sexo</th>
-                <th data-i18n="th_telefono">Teléfono</th>
-                <th data-i18n="th_renov">Mes Renov.</th>
-                <th data-i18n="th_alta">Fecha Alta</th>
-                <th data-i18n="th_estado">Estado</th>
-                <th class="th-actions" data-i18n="th_acciones">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-casos">
-              <tr><td colspan="10" class="loading-cell"><div class="spinner"></div><span data-i18n="loading">Cargando casos…</span></td></tr>
-            </tbody>
-          </table>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_nombre">Apellidos, Nombre</th>
+                  <th>DNI</th>
+                  <th>SIP</th>
+                  <th data-i18n="th_zona">Zona</th>
+                  <th data-i18n="th_sexo">Sexo</th>
+                  <th data-i18n="th_telefono">Teléfono</th>
+                  <th data-i18n="th_renov">Mes Renov.</th>
+                  <th data-i18n="th_alta">Fecha Alta</th>
+                  <th data-i18n="th_estado">Estado</th>
+                  <th class="th-actions" data-i18n="th_acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-casos">
+                <tr><td colspan="10" class="loading-cell"><div class="spinner"></div><span data-i18n="loading">Cargando casos…</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div><!-- /itab-usuarios -->
+
+        <!-- ════════════════ PESTAÑA FACTURAS ════════════════ -->
+        <div id="itab-facturas" class="inner-tab-panel hidden">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_mes">Mes</th>
+                  <th data-i18n="th_anio">Año</th>
+                  <th data-i18n="th_cuantia">Cuantía</th>
+                  <th data-i18n="th_estado">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-facturas">
+                <tr><td colspan="4" class="empty-cell" data-i18n="empty_facturas">No hay facturas registradas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ════════════════ PESTAÑA COMISIONES ════════════════ -->
+        <div id="itab-comisiones" class="inner-tab-panel hidden">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="th_fecha">Fecha</th>
+                  <th data-i18n="th_num_exp">Expediente</th>
+                  <th data-i18n="th_nombre">Nombre</th>
+                  <th data-i18n="th_estado">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-comisiones">
+                <tr><td colspan="4" class="empty-cell" data-i18n="empty_comisiones">No hay comisiones registradas</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </section>

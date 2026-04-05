@@ -13,7 +13,11 @@ from typing import List
 
 from app.database import get_db
 from app.models.caso_mayor_a_casa import CasoMayorACasa
+from app.models.factura_mayor_a_casa import FacturaMayorACasa
+from app.models.comision_mayor_a_casa import ComisionMayorACasa
 from app.schemas.caso_mayor_a_casa import CasoCreate, CasoUpdate, CasoResponse
+from app.schemas.factura_mayor_a_casa import FacturaResponse
+from app.schemas.comision_mayor_a_casa import ComisionResponse
 from app.utils.auth import get_current_dept
 
 router = APIRouter(dependencies=[Depends(get_current_dept)])
@@ -308,3 +312,20 @@ def generar_informe_renovacion_pdf(zona: int | None = None, lang: str = "es", db
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ── FACTURAS ──────────────────────────────────────────────────
+
+@router.get("/facturas/", response_model=List[FacturaResponse], summary="Listar todas las facturas")
+def list_facturas(db: Session = Depends(get_db)):
+    return db.query(FacturaMayorACasa).order_by(FacturaMayorACasa.anio.desc(), FacturaMayorACasa.mes.desc()).all()
+
+
+# ── COMISIONES ────────────────────────────────────────────────
+
+@router.get("/comisiones/", response_model=List[ComisionResponse], summary="Listar todas las comisiones")
+def list_comisiones(zona: int | None = None, db: Session = Depends(get_db)):
+    q = db.query(ComisionMayorACasa)
+    if zona:
+        q = q.filter(ComisionMayorACasa.zona == zona)
+    return q.order_by(ComisionMayorACasa.created_at.desc()).all()
