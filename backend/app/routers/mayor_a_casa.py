@@ -804,6 +804,24 @@ async def upload_factura_pdf(
     return {"pdf_url": f"/static/uploads/facturas/{filename}", "factura": FacturaResponse.model_validate(factura)}
 
 
+
+# ─── PDF Facturas (Informe Anual) ──────────────────────────────
+@router.get("/facturas/informe/pdf", summary="Informe PDF de facturación anual")
+def informe_facturas_pdf(
+    anio: Optional[int] = None,
+    lang: str = "es",
+    db: Session = Depends(get_db),
+):
+    anio = anio or date.today().year
+    facturas = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.anio == anio).all()
+    pdf_bytes = _build_pdf_facturas(facturas, anio=anio, lang=lang)
+    filename  = f"facturas_major_a_casa_{anio}.pdf"
+    return StreamingResponse(
+        BytesIO(pdf_bytes), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/facturas/{factura_id}/pdf", summary="Descargar PDF adjunto de factura")
 def download_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
     factura = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.id == factura_id).first()
@@ -814,6 +832,7 @@ def download_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Archivo no encontrado en servidor")
     return FileResponse(str(filepath), media_type="application/pdf",
                         filename=f"factura_{factura.anio}_{factura.mes:02d}.pdf")
+
 
 
 @router.delete("/facturas/{factura_id}/pdf", status_code=204, summary="Eliminar PDF adjunto de factura")
@@ -831,21 +850,7 @@ def delete_factura_pdf(factura_id: int, db: Session = Depends(get_db)):
     return
 
 
-# ─── PDF Facturas ─────────────────────────────────────────────
-@router.get("/facturas/informe/pdf", summary="Informe PDF de facturación anual")
-def informe_facturas_pdf(
-    anio: Optional[int] = None,
-    lang: str = "es",
-    db: Session = Depends(get_db),
-):
-    anio = anio or date.today().year
-    facturas = db.query(FacturaMayorACasa).filter(FacturaMayorACasa.anio == anio).all()
-    pdf_bytes = _build_pdf_facturas(facturas, anio=anio, lang=lang)
-    filename  = f"facturas_major_a_casa_{anio}.pdf"
-    return StreamingResponse(
-        BytesIO(pdf_bytes), media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+
 
 
 # ─── PDF Comisiones ───────────────────────────────────────────
