@@ -222,6 +222,18 @@ async def lifespan(_app: FastAPI):
                     dict(apellidos="Vila Seco",      nombre="Pere",     dni="88888888H", sip="20000008", zona=3, sexo="hombre", rango_edad="mayor_65", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
                     dict(apellidos="Roca Font",      nombre="Teresa",   dni="99999999J", sip="20000009", zona=4, sexo="mujer",  rango_edad="60_65",    estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
                     dict(apellidos="Soler Pau",      nombre="Joan",     dni="00000000K", sip="20000010", zona=2, sexo="hombre", rango_edad="menor_60", estado="en_tramite", mes_comision=_mes, fecha_alta=_date.today()),
+                    
+                    # ── Más ejemplos (meses anteriores) ────────────────
+                    dict(apellidos="Beltran Rus",    nombre="Eva",      dni="12121212A", sip="20000011", zona=1, sexo="mujer",  rango_edad="mayor_65", estado="aprobado",  mes_comision="2026-03", fecha_alta=_date(2026,3,5)),
+                    dict(apellidos="Castillo Mar",   nombre="Felipe",   dni="23232323B", sip="20000012", zona=2, sexo="hombre", rango_edad="60_65",    estado="denegado",  mes_comision="2026-03", fecha_alta=_date(2026,3,10)),
+                    dict(apellidos="Duarte Sol",     nombre="Sonia",    dni="34343434C", sip="20000013", zona=3, sexo="mujer",  rango_edad="menor_60", estado="aprobado",  mes_comision="2026-03", fecha_alta=_date(2026,3,15)),
+                    dict(apellidos="Esteve Pla",     nombre="Ramon",    dni="45454545D", sip="20000014", zona=4, sexo="hombre", rango_edad="mayor_65", estado="aprobado",  mes_comision="2026-03", fecha_alta=_date(2026,3,20)),
+                    dict(apellidos="Fabra Pou",      nombre="Isabel",   dni="56565656E", sip="20000015", zona=1, sexo="mujer",  rango_edad="60_65",    estado="denegado",  mes_comision="2026-03", fecha_alta=_date(2026,3,25)),
+                    dict(apellidos="Gallego Ros",    nombre="Luis",     dni="67676767F", sip="20000016", zona=2, sexo="hombre", rango_edad="mayor_65", estado="aprobado",  mes_comision="2026-02", fecha_alta=_date(2026,2,5)),
+                    dict(apellidos="Hidalgo Luz",    nombre="Elena",    dni="78787878G", sip="20000017", zona=3, sexo="mujer",  rango_edad="menor_60", estado="denegado",  mes_comision="2026-02", fecha_alta=_date(2026,2,12)),
+                    dict(apellidos="Iborra Marí",    nombre="Marc",     dni="89898989H", sip="20000018", zona=4, sexo="hombre", rango_edad="mayor_65", estado="aprobado",  mes_comision="2026-02", fecha_alta=_date(2026,2,18)),
+                    dict(apellidos="Jover Soro",     nombre="Julia",    dni="90909090J", sip="20000019", zona=1, sexo="mujer",  rango_edad="60_65",    estado="aprobado",  mes_comision="2026-02", fecha_alta=_date(2026,2,22)),
+                    dict(apellidos="Lacasa Mir",     nombre="Andreu",   dni="01010101K", sip="20000020", zona=2, sexo="hombre", rango_edad="mayor_65", estado="denegado",  mes_comision="2026-02", fecha_alta=_date(2026,2,26)),
                 ]
                 for row in _SEED_COM:
                     db3.add(ComisionMayorACasa(**row))
