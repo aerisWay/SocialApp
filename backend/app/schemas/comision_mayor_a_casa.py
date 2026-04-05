@@ -1,5 +1,5 @@
 # ============================================================
-# schemas/caso_mayor_a_casa.py — Validación de datos de casos
+# schemas/comision_mayor_a_casa.py — Validación de comisiones
 # ============================================================
 
 import re
@@ -7,42 +7,33 @@ from pydantic import BaseModel, field_validator, model_validator
 from datetime import date, datetime
 from typing import Optional
 
-
 RE_DNI = re.compile(r'^\d{8}[A-Za-z]$')
 RE_SIP = re.compile(r'^\d{8}$')
+ESTADOS_VALIDOS = ('en_tramite', 'aprobado', 'denegado')
 
 
-# ── ENTRADA: crear un caso nuevo ──────────────────────────────
-class CasoCreate(BaseModel):
-    # Obligatorios
+class ComisionCreate(BaseModel):
     apellidos: str
     nombre:    str
 
-    # Al menos uno de estos es obligatorio (validado en model_validator)
     dni: Optional[str] = None
     sip: Optional[str] = None
 
-    # Opcionales
-    zona:           Optional[int]  = None
-    rango_edad:     Optional[str]  = None
-    sexo:           Optional[str]  = None
-    mes_renovacion: Optional[str]  = None
-    telefono:       Optional[str]  = None
-    direccion:      Optional[str]  = None
+    zona:           Optional[int] = None
+    rango_edad:     Optional[str] = None
+    sexo:           Optional[str] = None
+    mes_renovacion: Optional[str] = None
+    telefono:       Optional[str] = None
+    direccion:      Optional[str] = None
     fecha_alta:     Optional[date] = None
     fecha_baja:     Optional[date] = None
-    activo:         bool           = True
-    observaciones:  Optional[str]  = None
+    estado:         str = 'en_tramite'
+    observaciones:  Optional[str] = None
 
     @model_validator(mode='after')
-    def al_menos_dni_o_sip_y_baja(self):
-        # Al menos uno de estos es obligatorio
+    def al_menos_dni_o_sip(self):
         if not self.dni and not self.sip:
             raise ValueError('Debes introducir al menos DNI o SIP')
-        
-        # Si está dado de baja (activo=False), la fecha_baja es obligatoria
-        if not self.activo and not self.fecha_baja:
-            raise ValueError('Si el caso es una BAJA, la fecha de baja es obligatoria')
         return self
 
     @field_validator("dni")
@@ -63,39 +54,22 @@ class CasoCreate(BaseModel):
             return v
         return None
 
+    @field_validator("estado")
+    @classmethod
+    def estado_valido(cls, v):
+        if v not in ESTADOS_VALIDOS:
+            raise ValueError(f"Estado debe ser uno de: {', '.join(ESTADOS_VALIDOS)}")
+        return v
+
     @field_validator("rango_edad")
     @classmethod
     def rango_edad_valido(cls, v):
         if v is not None and v not in ('menor_60', '60_65', 'mayor_65'):
-            raise ValueError("Rango de edad debe ser 'menor_60', '60_65' o 'mayor_65'")
-        return v or None
-
-    @field_validator("sexo")
-    @classmethod
-    def sexo_valido(cls, v):
-        if v is not None and v not in ("hombre", "mujer", "no_define"):
-            raise ValueError("El sexo debe ser 'hombre', 'mujer' o 'no_define'")
-        return v or None
-
-    @field_validator("zona")
-    @classmethod
-    def zona_valida(cls, v):
-        if v is not None and v not in (1, 2, 3, 4):
-            raise ValueError("La zona debe ser 1, 2, 3 o 4")
-        return v
-
-    @field_validator("mes_renovacion")
-    @classmethod
-    def mes_formato_valido(cls, v):
-        if v is not None and v != "":
-            parts = v.split("-")
-            if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
-                raise ValueError("El mes de renovación debe tener formato YYYY-MM")
+            raise ValueError("Rango de edad inválido")
         return v or None
 
 
-# ── ENTRADA: actualizar un caso (todos opcionales) ────────────
-class CasoUpdate(BaseModel):
+class ComisionUpdate(BaseModel):
     apellidos:      Optional[str]  = None
     nombre:         Optional[str]  = None
     dni:            Optional[str]  = None
@@ -108,15 +82,15 @@ class CasoUpdate(BaseModel):
     direccion:      Optional[str]  = None
     fecha_alta:     Optional[date] = None
     fecha_baja:     Optional[date] = None
-    activo:         Optional[bool] = None
+    estado:         Optional[str]  = None
     observaciones:  Optional[str]  = None
 
-    @model_validator(mode='after')
-    def validar_baja_update(self):
-        # Si se está intentando desactivar (activo=False), la fecha_baja es obligatoria
-        if self.activo is False and not self.fecha_baja:
-            raise ValueError('Si desactivas el caso, la fecha de baja es obligatoria')
-        return self
+    @field_validator("estado")
+    @classmethod
+    def estado_valido(cls, v):
+        if v is not None and v not in ESTADOS_VALIDOS:
+            raise ValueError(f"Estado debe ser uno de: {', '.join(ESTADOS_VALIDOS)}")
+        return v
 
     @field_validator("dni")
     @classmethod
@@ -137,8 +111,7 @@ class CasoUpdate(BaseModel):
         return None
 
 
-# ── SALIDA: lo que devuelve la API ────────────────────────────
-class CasoResponse(BaseModel):
+class ComisionResponse(BaseModel):
     id:             int
     apellidos:      str
     nombre:         str
@@ -152,8 +125,9 @@ class CasoResponse(BaseModel):
     direccion:      Optional[str]
     fecha_alta:     Optional[date]
     fecha_baja:     Optional[date]
-    activo:         bool
+    estado:         str
     observaciones:  Optional[str]
+    caso_id:        Optional[int]
     created_at:     datetime
 
     class Config:
