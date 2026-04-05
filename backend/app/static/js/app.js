@@ -251,7 +251,10 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const text = t(key);
-    if (text !== undefined) el.innerHTML = text;
+    // Only update if the result is different from the key or if we have a match
+    if (text && text !== key) {
+       el.innerHTML = text;
+    }
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
@@ -578,7 +581,7 @@ function renderStatsComisiones() {
 function renderPieChart() {
   const canvas = g('chart-edad');
   const legend = g('chart-legend');
-  if (!canvas) return;
+  if (!canvas || !canvas.getContext) return;
 
   let list = [...state.casos];
   if (state.filterZona !== null) {
