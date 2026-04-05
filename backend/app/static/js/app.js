@@ -128,6 +128,10 @@ const I18N = {
     confirm_quitar_pdf: '¿Seguro que quieres eliminar el PDF adjunto?',
     toast_pdf_deleted: 'PDF eliminado correctamente',
     lbl_mes:       'Mes:',
+    chart_edad_title:  'Distribución por Edad',
+    chart_sexo_title:  'Distribución por Género (Hombre / Mujer)',
+    chart_estado_title: 'Distribución por Estado (Activo / Baja)',
+    chart_estado_com_title: 'Estado de Tramitación (Trámite / Denegado / Aprobado)',
   },
   val: {
     login_sub:     'Accés per a APB — Regidoria de Benestar Social',
@@ -232,7 +236,11 @@ const I18N = {
     val_required:  'Camps obligatoris que falten',
     val_dni_or_sip:"Has d'introduir almenys DNI o SIP",
     val_dni_bad:   'El DNI ha de tindre 8 dígits i 1 lletra (ex: 12345678X)',
-    val_sip_bad:   'El SIP ha de tindre exactament 8 dígits',
+    val_sip_bad:       'SIP incorrecte (8 dígits)',
+    chart_edad_title:  'Distribució per Edat',
+    chart_sexo_title:  'Distribució per Gènere (Home / Dona)',
+    chart_estado_title: 'Distribució per Estat (Actiu / Baixa)',
+    chart_estado_com_title: 'Estat de Tramitació (Tràmit / Denegat / Aprovat)',
     welcome:       'Benvingut,',
     opt_no_asignar:'— Sense assignar —',
     opt_no_sexo:   '— No especificat —',
@@ -567,8 +575,8 @@ function renderStats() {
   const activos = list.filter(c => c.activo).length;
   const bajas = total - activos;
   _drawDonut(g('chart-estado'), g('chart-legend-estado'), [
-    { label: t('badge_activo'), color: 'var(--success)', count: activos },
-    { label: t('badge_baja'),   color: 'var(--text-3)',  count: bajas }
+    { label: 'Activo', color: '#10b981', count: activos },
+    { label: 'Baja',   color: '#64748b', count: bajas }
   ], total);
 
   // Chart 2: Sexo
@@ -596,9 +604,9 @@ function renderStatsComisiones() {
 
   // Chart 1: Estado de Tramitación
   _drawDonut(g('chart-estado-com'), g('chart-legend-estado-com'), [
-    { label: t('badge_tramite'),  color: '#f59e0b', count: list.filter(c => c.estado === 'en_tramite').length },
-    { label: t('badge_aprobado'), color: '#10b981', count: list.filter(c => c.estado === 'aprobado').length },
-    { label: t('badge_denegado'), color: '#ef4444', count: list.filter(c => c.estado === 'denegado').length }
+    { label: 'Trámite',  color: '#f59e0b', count: list.filter(c => c.estado === 'en_tramite').length },
+    { label: 'Aprobado', color: '#10b981', count: list.filter(c => c.estado === 'aprobado').length },
+    { label: 'Denegado', color: '#ef4444', count: list.filter(c => c.estado === 'denegado').length }
   ], total);
 
   // Chart 2: Sexo
