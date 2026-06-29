@@ -2,6 +2,7 @@ import { useEffect, useState, ReactNode } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Minus, Maximize2, Minimize2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isTauri } from "@/lib/tauri";
 
 interface TitleBarProps {
   title?: string;
@@ -23,9 +24,10 @@ export function TitleBar({
   onDoubleClick,
 }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
+  const native = isTauri();
 
   useEffect(() => {
-    if (!showMaximize) return;
+    if (!showMaximize || !native) return;
 
     const appWindow = getCurrentWebviewWindow();
 
@@ -41,25 +43,28 @@ export function TitleBar({
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [showMaximize]);
+  }, [showMaximize, native]);
 
   const handleMinimize = async () => {
+    if (!native) return;
     const appWindow = getCurrentWebviewWindow();
     await appWindow.minimize();
   };
 
   const handleToggleMaximize = async () => {
+    if (!native) return;
     const appWindow = getCurrentWebviewWindow();
     await appWindow.toggleMaximize();
   };
 
   const handleClose = async () => {
+    if (!native) return;
     const appWindow = getCurrentWebviewWindow();
     await appWindow.close();
   };
 
   useEffect(() => {
-    if (!showClose) {
+    if (!showClose || !native) {
       return;
     }
 
@@ -80,7 +85,7 @@ export function TitleBar({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showClose]);
+  }, [showClose, native]);
 
   const handleDragRegionDoubleClick = () => {
     if (onDoubleClick) {
@@ -111,11 +116,11 @@ export function TitleBar({
       <div className="flex items-center">
         {rightActions}
 
-        {rightActions && (showMinimize || showMaximize || showClose) && (
+        {native && rightActions && (showMinimize || showMaximize || showClose) && (
           <div className="bg-border/40 mx-1 h-4 w-px" />
         )}
 
-        {showMinimize && (
+        {native && showMinimize && (
           <button
             onClick={handleMinimize}
             className="title-bar-control"
@@ -126,7 +131,7 @@ export function TitleBar({
           </button>
         )}
 
-        {showMaximize && (
+        {native && showMaximize && (
           <button
             onClick={handleToggleMaximize}
             className="title-bar-control"
@@ -137,7 +142,7 @@ export function TitleBar({
           </button>
         )}
 
-        {showClose && (
+        {native && showClose && (
           <button
             onClick={handleClose}
             className="title-bar-control hover:bg-destructive hover:text-destructive-foreground"

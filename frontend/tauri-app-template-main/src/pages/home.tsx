@@ -13,6 +13,7 @@ import { listen } from "@tauri-apps/api/event";
 import { registerShortcut } from "@/lib/shortcut";
 import { toggleWindow } from "@/lib/window";
 import { useAppTranslation } from "@/hooks/use-app-translation";
+import { isTauri } from "@/lib/tauri";
 
 const SHORTCUT_KEY = "global-shortcut-show-main";
 
@@ -22,6 +23,8 @@ export default function HomePage() {
   const { t } = useAppTranslation();
 
   useEffect(() => {
+    if (!isTauri()) return;
+
     // Listen for shortcut change events from settings window
     const unlistenShortcutChanged = listen<{ shortcut: string }>(
       "shortcut-changed",
@@ -67,7 +70,15 @@ export default function HomePage() {
   }, [t]);
 
   async function greet() {
-    setGreetMsg(await invoke("greet", { name }));
+    if (!isTauri()) {
+      setGreetMsg("Web demo: native Rust commands are only available in the desktop app.");
+      return;
+    }
+    try {
+      setGreetMsg(await invoke("greet", { name }));
+    } catch (error) {
+      console.error("Greet failed:", error);
+    }
   }
 
   return (

@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { isTauri } from "@/lib/tauri";
 import { useEffect, useState, type ReactNode } from "react";
 
 type WindowFrameProps = {
@@ -14,6 +15,7 @@ export function WindowFrame({ titleBar, children, className, contentClassName }:
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
+    if (!isTauri()) return;
     const appWindow = getCurrentWebviewWindow();
 
     appWindow.isMaximized().then(setIsMaximized);

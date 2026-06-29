@@ -1,6 +1,7 @@
 import { check } from "@tauri-apps/plugin-updater";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { isTauri } from "@/lib/tauri";
 
 export interface UpdateProgress {
   event: "Started" | "Progress" | "Finished";
@@ -17,6 +18,9 @@ export type UpdateCheckResult =
   | { status: "error"; error: unknown };
 
 export async function checkForUpdates(): Promise<UpdateCheckResult> {
+  if (!isTauri()) {
+    return { status: "up-to-date" };
+  }
   try {
     const update = await check();
     if (update) {
@@ -31,6 +35,9 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
 }
 
 export async function downloadAndInstall(onProgress?: (progress: UpdateProgress) => void) {
+  if (!isTauri()) {
+    return false;
+  }
   const update = await check();
 
   if (!update) {
