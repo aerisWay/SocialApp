@@ -1,43 +1,65 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+# Publica el frontend real (APBApp) en GitHub Pages como demo autónoma.
+# Ensambla el sitio a partir de backend/app/static + deploy/demo.js,
+# SIN modificar los archivos fuente de la app.
+name: Deploy APBApp demo to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble static site for GitHub Pages
+        run: |
+          set -e
+          rm -rf _site
+          mkdir -p _site/static
+          # 1) Copia la app real tal cual bajo /static (igual que la sirve el backend)
+          cp -r backend/app/static/. _site/static/
+          # 2) Añade la capa de modo demo (solo se activa en github.io)
+          cp deploy/demo.js _site/static/js/demo.js
+          # 3) index.html en la raíz: rutas absolutas /static/ -> relativas static/
+          #    e inyecta demo.js justo antes de app.js
+          sed -e 's#"/static/#"static/#g' \
+              -e 's#<script src="static/js/app.js"></script>#<script src="static/js/demo.js"></script>\n  <script src="static/js/app.js"></script>#' \
+              backend/app/static/index.html > _site/index.html
+          # 4) SPA fallback: cualquier ruta desconocida sirve la app
+          cp _site/index.html _site/404.html
+          echo "---- _site/index.html (cabecera) ----"
+          head -n 14 _site/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
   deploy:
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
