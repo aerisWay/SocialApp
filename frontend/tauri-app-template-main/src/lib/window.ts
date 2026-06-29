@@ -1,7 +1,6 @@
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { emit, once } from "@tauri-apps/api/event";
-import { isTauri } from "@/lib/tauri";
 
 const createWindowLoading: Record<string, boolean> = {};
 const destroyTimers: Record<string, number> = {};
@@ -71,7 +70,6 @@ async function calcCenterPosition(
 }
 
 export async function toggleWindow(label: string) {
-  if (!isTauri()) return;
   const window = await WebviewWindow.getByLabel(label);
   if (!window) {
     return;
@@ -194,7 +192,6 @@ export async function createWindow(
     onError?: () => void;
   }
 ) {
-  if (!isTauri()) return;
   cancelDestroyWindow(label);
 
   if (createWindowLoading[label]) {

@@ -2,7 +2,6 @@ import { Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { emit } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { isTauri } from "@/lib/tauri";
 
 export function LanguageToggle() {
   const { i18n, t } = useTranslation();
@@ -10,8 +9,6 @@ export function LanguageToggle() {
   const toggleLanguage = async () => {
     const newLang = i18n.language === "zh" ? "en" : "zh";
     await i18n.changeLanguage(newLang);
-
-    if (!isTauri()) return;
 
     // Update tray menu with new language
     try {

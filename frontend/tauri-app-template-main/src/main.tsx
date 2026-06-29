@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./index.css";
 import "./i18n";
-import { isTauri } from "./lib/tauri";
 
 const HomePage = lazy(() => import("./pages/home"));
 const AboutPage = lazy(() => import("./pages/about"));
@@ -20,8 +19,7 @@ const PageComponent = pageMap[pathname as keyof typeof pageMap] ?? HomePage;
 
 function AppWrapper() {
   useEffect(() => {
-    // Show window after React is ready (desktop only)
-    if (!isTauri()) return;
+    // Show window after React is ready
     getCurrentWindow().show();
   }, []);
 

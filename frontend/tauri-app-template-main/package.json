@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:web": "vite build --base=/SocialApp/",
     "preview": "vite preview",
     "release:version": "node scripts/release-version.mjs",
     "tauri": "tauri",
